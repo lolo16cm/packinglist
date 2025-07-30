@@ -1,19 +1,124 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>Upload Invoice</title></head>
+<head>
+    <title>Packing List Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .description {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            border-left: 4px solid #2196F3;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="file"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="file"]:focus, input[type="number"]:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #1976D2;
+        }
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
 
 <body>
-<h2>Upload Invoice and Tracking Info</h2>
+<div class="container">
+    <h2>Packing List & Invoice Generator</h2>
+    
+    <div class="description">
+        <strong>What this tool generates:</strong>
+        <ul>
+            <li><strong>Packing List CSV</strong>: Headers - PO#, ITEM#, QTY, NOTES</li>
+            <li><strong>Invoice CSV</strong>: Headers - PO#, ITEM#, CASE_QTY, FOB (MS-DOS format)</li>
+        </ul>
+        <p><strong>Input CSV should contain:</strong> PO/NO., ITEM NO., DESCRIPTION OF GOODS, QTY, UNIT VALUE (USD)</p>
+    </div>
 
-<form method="post" enctype="multipart/form-data" action="/upload">
-    <label>Invoice CSV: <input type="file" name="csvFile" required></label><br><br>
-    <label>UPS Tracking Image: <input type="file" name="imageFile" required></label><br><br>
-    <label>Number of Boxes: <input type="number" name="boxes" required></label><br><br>
-    <label>Total Weight (KG): <input type="number" step="0.01" name="weight" required></label><br><br>
-    <label>RMB: <input type="number" name="rmb" required></label><br><br>
-    <label>Exchange Rate: <input type="number" step="0.01" name="rate" required></label><br><br>
-    <button type="submit">Generate Packing List</button>
-</form>
+    <form method="post" enctype="multipart/form-data" action="/upload">
+        <div class="form-group">
+            <label for="csvFile">Invoice CSV File:</label>
+            <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
+            <div class="file-info">Must contain: PO/NO., ITEM NO., DESCRIPTION OF GOODS, QTY, UNIT VALUE (USD)</div>
+        </div>
+        
+        <div class="form-group">
+            <label for="imageFile">UPS Tracking Image:</label>
+            <input type="file" id="imageFile" name="imageFile" accept="image/*" required>
+            <div class="file-info">Image containing UPS tracking number</div>
+        </div>
+        
+        <div class="form-group">
+            <label for="boxes">Number of Boxes:</label>
+            <input type="number" id="boxes" name="boxes" min="1" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="weight">Total Weight (KG):</label>
+            <input type="number" id="weight" name="weight" step="0.01" min="0" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="rmb">RMB Amount:</label>
+            <input type="number" id="rmb" name="rmb" step="0.01" min="0" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="rate">Exchange Rate:</label>
+            <input type="number" id="rate" name="rate" step="0.01" min="0" required>
+        </div>
+        
+        <button type="submit">Generate Files (ZIP Download)</button>
+    </form>
+</div>
 
 </body>
 

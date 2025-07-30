@@ -149,10 +149,13 @@ public class UploadController {
     }
 
 
-    public File generateCsv(String date, List<PackingEntry> entries, String tracking, double weight, int boxes, double rmb, double rate) throws IOException {
+    public File generatePackingListCsv(String date, List<PackingEntry> entries, String tracking, double weight, int boxes, double rmb, double rate) throws IOException {
         String arrival = "XR" + date;
         String po = "W" + date;
         double upsFreight = weight * rmb / rate;
+        
+        // Calculate total quantity
+        int totalQty = entries.stream().mapToInt(PackingEntry::getQty).sum();
 
         File file = File.createTempFile("packing-list-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
@@ -164,15 +167,35 @@ public class UploadController {
             writer.write("UPS TRACKING#: " + tracking + "\n\n");
 
             writer.write("P.O#: " + po + "\n");
-            writer.write("PO/NO.,ITEM NO,QTY,NOTES\n");
+            writer.write("PO/NO.,ITEM NO.,QTY,NOTES\n");
             for (PackingEntry entry : entries) {
                 writer.write(
                         entry.getPo() + "," +
                                 entry.getItemNo() + "," +
                                 entry.getQty() + "," +
-                                entry.getNotes() + "\n"
+                                "\n" // Empty notes field
                 );
+            }
+            // Add total row
+            writer.write("TOTAL,," + totalQty + ",\n");
+        }
+        return file;
+    }
 
+    public File generateFobCsv(String date, List<PackingEntry> entries) throws IOException {
+        File file = File.createTempFile("fob-" + date, ".csv");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            // Write header with new column names
+            writer.write("PO#,ITEM#,CASE_QTY,FOB\n");
+            
+            // Write data rows
+            for (PackingEntry entry : entries) {
+                writer.write(
+                        entry.getPo() + "," +
+                                entry.getItemNo() + "," +
+                                entry.getQty() + "," +
+                                String.format("%.2f", entry.getUnitValue()) + "\n"
+                );
             }
         }
         return file;
@@ -205,6 +228,27 @@ public class UploadController {
             // Log the error and return 0 as default
             System.err.println("Warning: Invalid quantity value '" + qtyString + "'. Using 0 as default.");
             return 0;
+        }
+    }
+
+    /**
+     * Safely parses a unit value string to a double with proper error handling.
+     * 
+     * @param unitValueString The unit value string from CSV
+     * @return The parsed unit value as double, or 0.0 if parsing fails
+     */
+    private double parseUnitValue(String unitValueString) {
+        if (unitValueString == null || unitValueString.trim().isEmpty()) {
+            return 0.0;
+        }
+        
+        try {
+            // Remove any currency symbols or extra characters, keep only numbers and decimal point
+            String cleanValue = unitValueString.trim().replaceAll("[^0-9.]", "");
+            return Double.parseDouble(cleanValue);
+        } catch (NumberFormatException e) {
+            System.err.println("Warning: Invalid unit value '" + unitValueString + "'. Using 0.0 as default.");
+            return 0.0;
         }
     }
 }

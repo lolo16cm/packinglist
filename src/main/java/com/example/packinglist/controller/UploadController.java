@@ -235,13 +235,13 @@ public class UploadController {
             
             // Configure recognition settings for better accuracy
             RecognitionSettings settings = new RecognitionSettings();
-            settings.setLanguage(com.aspose.ocr.Language.Eng);
+            // Language setting - using auto-detection or default language
             
             // Perform OCR recognition
             ArrayList<RecognitionResult> results = api.Recognize(input, settings);
             
             if (results != null && !results.isEmpty()) {
-                String text = results.get(0).recognition_text;
+                String text = results.get(0).recognitionText;
                 if (text != null) {
                     // Extract UPS tracking number pattern: 1Z followed by 16 alphanumeric characters
                     Matcher matcher = Pattern.compile("1Z[0-9A-Z]{16}").matcher(text.toUpperCase());

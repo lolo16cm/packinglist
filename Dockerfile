@@ -13,7 +13,11 @@ COPY src src
 RUN ./mvnw clean package -DskipTests
 
 # Stage 2: Runtime container
-FROM eclipse-temurin:17-jdk-slim
+FROM eclipse-temurin:17-jre
+# Alternative options if the above doesn't work:
+# FROM openjdk:17-jre-slim
+# FROM eclipse-temurin:17
+# FROM amazoncorretto:17
 
 RUN apt-get update && apt-get install -y \
     fontconfig \

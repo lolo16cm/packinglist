@@ -46,3 +46,6 @@ Standard Commons Logging discovery in action with spring-jcl: please remove comm
 Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
 2025-07-30T05:34:14.453Z  INFO 4178 --- [packinglist] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
 2025-07-30T05:34:14.456Z  INFO 4178 --- [packinglist] [           main] c.e.packinglist.PackinglistApplication   : Started PackinglistApplication in 0.853 seconds (process running for 1.008)
+2025-07-30T05:34:27.558Z  INFO 4178 --- [packinglist] [0.0-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-07-30T05:34:27.558Z  INFO 4178 --- [packinglist] [0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-07-30T05:34:27.559Z  INFO 4178 --- [packinglist] [0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms

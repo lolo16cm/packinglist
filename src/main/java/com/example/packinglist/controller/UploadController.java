@@ -324,7 +324,7 @@ public class UploadController {
                 writer.write("<td>" + entry.getPoNo() + "</td>\n");
                 writer.write("<td>" + entry.getItemNo() + "</td>\n");
                 writer.write("<td class=\"center\">" + entry.getQty() + "</td>\n");
-                writer.write("<td class=\"center\"></td>\n"); // Empty Receive check column
+                writer.write("<td class=\"center\"><input type=\"checkbox\" /></td>\n"); // Checkbox for Receive check column
                 writer.write("<td></td>\n"); // Empty notes field
                 writer.write("</tr>\n");
                 totalQty += entry.getQty();

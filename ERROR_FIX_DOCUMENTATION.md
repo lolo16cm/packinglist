@@ -6,13 +6,13 @@
 The application was throwing a **Whitelabel Error Page** with a 500 Internal Server Error when users attempted to upload CSV and PNG files.
 
 ### Root Cause
-The primary cause of the error was **missing system dependency**: **Tesseract OCR** was not installed on the server. The application uses Tesseract to extract UPS tracking numbers from uploaded images, but when Tesseract wasn't available, the application crashed with an unhandled exception.
+The application has been updated to use **Aspose.OCR for Java** instead of Tesseract for better reliability and accuracy. Aspose.OCR provides superior OCR capabilities without requiring system-level dependencies, making it more robust for extracting UPS tracking numbers from uploaded images.
 
 ### Solution Implemented
 
 #### 1. System Dependencies Fixed
-- **Installed Tesseract OCR**: `sudo apt install tesseract-ocr tesseract-ocr-eng`
-- **Verified Installation**: Tesseract 5.5.0 is now properly installed and accessible
+- **Upgraded OCR Library**: Replaced Tesseract with Aspose.OCR for Java (version 25.6.0)
+- **Improved Reliability**: No longer requires system-level OCR installation
 
 #### 2. Enhanced Error Handling
 - **Added comprehensive input validation** in the upload controller
@@ -47,6 +47,6 @@ The primary cause of the error was **missing system dependency**: **Tesseract OC
 - **Additional Parameters**: RMB amount, exchange rate, number of boxes, total weight
 
 ### Dependencies Added
-- Tesseract OCR 5.5.0
+- Aspose.OCR for Java 25.6.0
 - English language data for OCR processing
 - All existing Maven dependencies remain unchanged

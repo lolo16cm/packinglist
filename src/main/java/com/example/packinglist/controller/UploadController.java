@@ -2,8 +2,12 @@ package com.example.packinglist.controller;
 import org.springframework.core.io.Resource;
 import com.example.packinglist.model.PackingEntry;
 import com.example.packinglist.model.InvoiceEntry;
-import net.sourceforge.tess4j.ITesseract;
-import net.sourceforge.tess4j.Tesseract;
+import com.aspose.ocr.AsposeOCR;
+import com.aspose.ocr.OcrInput;
+import com.aspose.ocr.InputType;
+import com.aspose.ocr.RecognitionResult;
+import com.aspose.ocr.RecognitionSettings;
+import java.util.ArrayList;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.core.io.InputStreamResource;
@@ -105,7 +109,7 @@ public class UploadController {
             // Return user-friendly error message
             String errorMessage = "An error occurred while processing your files. ";
             if (e.getMessage() != null) {
-                if (e.getMessage().contains("tesseract") || e.getMessage().contains("OCR")) {
+                if (e.getMessage().contains("OCR") || e.getMessage().contains("recognition")) {
                     errorMessage += "There was an issue processing the image file. Please ensure it's a clear image containing a UPS tracking number.";
                 } else if (e.getMessage().contains("CSV") || e.getMessage().contains("parse")) {
                     errorMessage += "There was an issue parsing the CSV file. Please check the file format and ensure it contains the required columns.";
@@ -217,13 +221,41 @@ public class UploadController {
             return "";
         }
         
-        ITesseract tesseract = new Tesseract();
         File temp = File.createTempFile("ups", ".png");
         try {
+            // Save uploaded image to temporary file
             image.transferTo(temp);
-            String text = tesseract.doOCR(temp);
-            Matcher matcher = Pattern.compile("1Z[0-9A-Z]{16}").matcher(text);
-            return matcher.find() ? matcher.group() : "";
+            
+            // Initialize Aspose.OCR API
+            AsposeOCR api = new AsposeOCR();
+            
+            // Create OCR input from the temporary file
+            OcrInput input = new OcrInput(InputType.SingleImage);
+            input.add(temp.getAbsolutePath());
+            
+            // Configure recognition settings for better accuracy
+            RecognitionSettings settings = new RecognitionSettings();
+            settings.setLanguage(com.aspose.ocr.Language.Eng);
+            
+            // Perform OCR recognition
+            ArrayList<RecognitionResult> results = api.Recognize(input, settings);
+            
+            if (results != null && !results.isEmpty()) {
+                String text = results.get(0).recognition_text;
+                if (text != null) {
+                    // Extract UPS tracking number pattern: 1Z followed by 16 alphanumeric characters
+                    Matcher matcher = Pattern.compile("1Z[0-9A-Z]{16}").matcher(text.toUpperCase());
+                    return matcher.find() ? matcher.group() : "";
+                }
+            }
+            
+            return "";
+        } catch (Exception e) {
+            // Log the error for debugging
+            System.err.println("OCR Error: " + e.getMessage());
+            e.printStackTrace();
+            // Return empty string instead of throwing exception to prevent app crash
+            return "";
         } finally {
             // Always clean up the temporary file
             if (temp.exists()) {
@@ -266,7 +298,7 @@ public class UploadController {
     }
 
     public File generateMsdosCsv(String date, List<InvoiceEntry> invoiceEntries) throws IOException {
-        File file = File.createTempFile("invoice-" + date, ".csv");
+        File file = File.createTempFile("import_inv-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             // Write MS-DOS style CSV with headers: PO#, ITEM#, CASE_QTY, FOB
             writer.write("PO#,ITEM#,CASE_QTY,FOB\r\n"); // MS-DOS line ending
@@ -290,7 +322,7 @@ public class UploadController {
             addFileToZip(zos, packingList, "packing-list-" + date + ".csv");
             
             // Add MS-DOS CSV to zip
-            addFileToZip(zos, msdosCsv, "invoice-" + date + ".csv");
+            addFileToZip(zos, msdosCsv, "import_inv-" + date + ".csv");
         }
         
         return zipFile;

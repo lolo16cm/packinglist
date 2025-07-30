@@ -30,6 +30,14 @@
 		<java.version>17</java.version>
 	</properties>
 
+	<repositories>
+		<repository>
+			<id>AsposeJavaAPI</id>
+			<name>Aspose Java API</name>
+			<url>https://repository.aspose.com/repo/</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 	<!-- Spring Boot -->
 		<dependency>
@@ -49,11 +57,11 @@
 			<version>1.10.0</version>
 		</dependency>
 
-		<!-- Tess4J for OCR -->
+		<!-- Aspose.OCR for Java - Better alternative to Tesseract -->
 		<dependency>
-			<groupId>net.sourceforge.tess4j</groupId>
-			<artifactId>tess4j</artifactId>
-			<version>4.5.5</version> <!-- ✅ This one is stable and works -->
+			<groupId>com.aspose</groupId>
+			<artifactId>aspose-ocr</artifactId>
+			<version>25.6.0</version>
 		</dependency>
 
 		<!-- Lombok -->

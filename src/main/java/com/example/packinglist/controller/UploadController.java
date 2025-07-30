@@ -2,11 +2,7 @@ package com.example.packinglist.controller;
 import org.springframework.core.io.Resource;
 import com.example.packinglist.model.PackingEntry;
 import com.example.packinglist.model.InvoiceEntry;
-import com.aspose.ocr.AsposeOCR;
-import com.aspose.ocr.OcrInput;
-import com.aspose.ocr.InputType;
-import com.aspose.ocr.RecognitionResult;
-import com.aspose.ocr.RecognitionSettings;
+
 import java.util.ArrayList;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -70,14 +66,13 @@ public class UploadController {
                     .body("CSV file appears to be empty or has invalid format. Please check your CSV file contains the required columns: PO/NO., ITEM NO., DESCRIPTION OF GOODS, QTY, UNIT VALUE (USD)");
             }
 
-            // Determine tracking number: prioritize manual input over image extraction
+            // Use manual tracking number if provided
             String tracking = "";
             if (manualTracking != null && !manualTracking.trim().isEmpty()) {
                 tracking = manualTracking.trim();
                 System.out.println("Using manual tracking number: " + tracking);
             } else {
-                tracking = extractTrackingNumber(imageFile);
-                System.out.println("Extracted tracking number from image: " + tracking);
+                System.out.println("No manual tracking number provided");
             }
             
             String today = new SimpleDateFormat("yyMMdd").format(new Date());
@@ -119,9 +114,7 @@ public class UploadController {
             // Return user-friendly error message
             String errorMessage = "An error occurred while processing your files. ";
             if (e.getMessage() != null) {
-                if (e.getMessage().contains("OCR") || e.getMessage().contains("recognition")) {
-                    errorMessage += "There was an issue processing the image file. Please ensure it's a clear image containing a UPS tracking number.";
-                } else if (e.getMessage().contains("CSV") || e.getMessage().contains("parse")) {
+                if (e.getMessage().contains("CSV") || e.getMessage().contains("parse")) {
                     errorMessage += "There was an issue parsing the CSV file. Please check the file format and ensure it contains the required columns.";
                 } else {
                     errorMessage += "Please check your files and try again.";
@@ -225,188 +218,7 @@ public class UploadController {
         }
     }
 
-    public String extractTrackingNumber(MultipartFile image) throws Exception {
-        // If no image is provided, return empty string
-        if (image == null || image.isEmpty()) {
-            System.out.println("No image provided for tracking extraction");
-            return "";
-        }
-        
-        System.out.println("Processing image: " + image.getOriginalFilename() + 
-                          " (size: " + image.getSize() + " bytes, type: " + image.getContentType() + ")");
-        
-        File temp = File.createTempFile("ups", ".png");
-        try {
-            // Save uploaded image to temporary file
-            image.transferTo(temp);
-            
-            // Validate image before OCR
-            if (!isValidImage(temp)) {
-                System.out.println("Invalid or too small image, trying text extraction fallback");
-                return tryTextExtraction(image);
-            }
-            
-            // First try OCR extraction
-            String ocrResult = tryOCRExtraction(temp);
-            if (!ocrResult.isEmpty()) {
-                System.out.println("OCR extraction successful: " + ocrResult);
-                return ocrResult;
-            }
-            
-            // Fallback: if it's a text file (for testing), read it directly
-            String textResult = tryTextExtraction(image);
-            if (!textResult.isEmpty()) {
-                System.out.println("Text extraction successful: " + textResult);
-                return textResult;
-            }
-            
-            System.out.println("No tracking number found in image");
-            return "";
-        } catch (Exception e) {
-            // Log the error for debugging
-            System.err.println("Tracking extraction error: " + e.getMessage());
-            e.printStackTrace();
-            
-            // Try fallback text extraction
-            try {
-                String textResult = tryTextExtraction(image);
-                if (!textResult.isEmpty()) {
-                    System.out.println("Fallback text extraction successful: " + textResult);
-                    return textResult;
-                }
-            } catch (Exception fallbackException) {
-                System.err.println("Fallback extraction also failed: " + fallbackException.getMessage());
-            }
-            
-            // Return empty string instead of throwing exception to prevent app crash
-            return "";
-        } finally {
-            // Always clean up the temporary file
-            if (temp.exists()) {
-                temp.delete();
-            }
-        }
-    }
-    
-    private String tryOCRExtraction(File imageFile) {
-        try {
-            System.out.println("Initializing Aspose.OCR API...");
-            // Initialize Aspose.OCR API
-            AsposeOCR api = new AsposeOCR();
-            
-            // Create OCR input from the temporary file
-            OcrInput input = new OcrInput(InputType.SingleImage);
-            input.add(imageFile.getAbsolutePath());
-            
-            // Configure recognition settings for better accuracy
-            RecognitionSettings settings = new RecognitionSettings();
-            // Note: Advanced settings may not be available in this version of Aspose OCR
-            
-            System.out.println("Performing OCR recognition on: " + imageFile.getAbsolutePath());
-            // Perform OCR recognition
-            ArrayList<RecognitionResult> results = api.Recognize(input, settings);
-            
-            if (results != null && !results.isEmpty()) {
-                String text = results.get(0).recognitionText;
-                System.out.println("OCR raw text result: '" + text + "'");
-                if (text != null && !text.trim().isEmpty()) {
-                    return extractTrackingFromText(text);
-                }
-            } else {
-                System.out.println("OCR returned no results");
-            }
-            
-            return "";
-        } catch (Exception e) {
-            System.err.println("OCR extraction failed: " + e.getMessage());
-            e.printStackTrace();
-            return "";
-        }
-    }
-    
-    private String tryTextExtraction(MultipartFile file) {
-        try {
-            // Check if this might be a text file by content type or name
-            String contentType = file.getContentType();
-            String filename = file.getOriginalFilename();
-            
-            System.out.println("Checking text extraction for file: " + filename + 
-                             " (content-type: " + contentType + ")");
-            
-            // Expanded text file detection
-            boolean isTextFile = (contentType != null && 
-                (contentType.startsWith("text/") || 
-                 contentType.equals("application/octet-stream"))) ||
-                (filename != null && 
-                 (filename.toLowerCase().endsWith(".txt") ||
-                  filename.toLowerCase().endsWith(".log")));
-            
-            if (isTextFile) {
-                // Read as text file
-                String content = new String(file.getBytes());
-                System.out.println("Text file content: '" + content + "'");
-                return extractTrackingFromText(content);
-            }
-            
-            System.out.println("File not recognized as text file");
-            return "";
-        } catch (Exception e) {
-            System.err.println("Text extraction failed: " + e.getMessage());
-            return "";
-        }
-    }
-    
-    private String extractTrackingFromText(String text) {
-        if (text == null || text.isEmpty()) {
-            return "";
-        }
-        
-        System.out.println("Extracting tracking from text: '" + text + "'");
-        
-        // Multiple UPS tracking patterns for better matching
-        String[] patterns = {
-            "1Z[0-9A-Z]{16}",           // Standard UPS format
-            "1Z\\s*[0-9A-Z]{16}",       // With optional space after 1Z
-            "1Z[0-9A-Z]{6}[0-9A-Z]{10}" // Alternative format
-        };
-        
-        String upperText = text.toUpperCase();
-        
-        for (String patternStr : patterns) {
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(patternStr);
-            java.util.regex.Matcher matcher = pattern.matcher(upperText);
-            if (matcher.find()) {
-                String result = matcher.group().replaceAll("\\s", ""); // Remove spaces
-                System.out.println("Found tracking number: " + result);
-                return result;
-            }
-        }
-        
-        System.out.println("No tracking number found in text");
-        return "";
-    }
-    
-    /**
-     * Validates if the image file is suitable for OCR processing
-     */
-    private boolean isValidImage(File imageFile) {
-        try {
-            // Check file size (should be > 1KB for meaningful content)
-            long fileSize = imageFile.length();
-            System.out.println("Image file size: " + fileSize + " bytes");
-            
-            if (fileSize < 1024) {
-                System.out.println("Image too small: " + fileSize + " bytes (minimum 1KB required)");
-                return false;
-            }
-            
-            // Additional validation could be added here (e.g., check image dimensions)
-            return true;
-        } catch (Exception e) {
-            System.err.println("Error validating image: " + e.getMessage());
-            return false;
-        }
-    }
+
 
 
     public File generatePackingList(String date, List<InvoiceEntry> invoiceEntries, String tracking, double weight, int boxes, double rmb, double rate) throws IOException {
@@ -455,8 +267,8 @@ public class UploadController {
     public File generateMsdosCsv(String date, List<InvoiceEntry> invoiceEntries) throws IOException {
         File file = File.createTempFile("import_inv-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            // Write MS-DOS style CSV with headers: PO#, ITEM#, CASE_QTY, FOB
-            writer.write("PO#,ITEM#,CASE_QTY,FOB\r\n"); // MS-DOS line ending
+                    // Write MS-DOS style CSV with headers: PO#, ITEM#, QTY, FOB
+        writer.write("PO#,ITEM#,QTY,FOB\r\n"); // MS-DOS line ending
             for (InvoiceEntry entry : invoiceEntries) {
                 writer.write(
                         entry.getPoNo() + "," +

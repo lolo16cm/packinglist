@@ -37,14 +37,14 @@
             font-weight: bold;
             color: #555;
         }
-        input[type="file"], input[type="number"] {
+        input[type="file"], input[type="number"], input[type="text"] {
             width: 100%;
             padding: 10px;
             border: 2px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
         }
-        input[type="file"]:focus, input[type="number"]:focus {
+        input[type="file"]:focus, input[type="number"]:focus, input[type="text"]:focus {
             border-color: #2196F3;
             outline: none;
         }
@@ -66,6 +66,17 @@
             font-size: 12px;
             color: #666;
             margin-top: 5px;
+        }
+        .tracking-section {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4CAF50;
+        }
+        .tracking-section h3 {
+            margin-top: 0;
+            color: #4CAF50;
         }
     </style>
 </head>
@@ -90,10 +101,19 @@
             <div class="file-info">Must contain: PO/NO., ITEM NO., DESCRIPTION OF GOODS, QTY, UNIT VALUE (USD)</div>
         </div>
         
-        <div class="form-group">
-            <label for="imageFile">UPS Tracking Image (Optional):</label>
-            <input type="file" id="imageFile" name="imageFile" accept="image/*">
-            <div class="file-info">Optional: Image containing UPS tracking number. If not provided, tracking field will be left empty.</div>
+        <div class="tracking-section">
+            <h3>UPS Tracking Number</h3>
+            <div class="form-group">
+                <label for="manualTracking">Manual Tracking Number (Optional):</label>
+                <input type="text" id="manualTracking" name="manualTracking" placeholder="Enter UPS tracking number manually (e.g., 1Z999AA12345678901)">
+                <div class="file-info">If provided, this will be used instead of extracting from image</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="imageFile">OR Upload Tracking Image (Optional):</label>
+                <input type="file" id="imageFile" name="imageFile" accept="image/*">
+                <div class="file-info">Optional: Image containing UPS tracking number. Will be ignored if manual tracking is provided.</div>
+            </div>
         </div>
         
         <div class="form-group">

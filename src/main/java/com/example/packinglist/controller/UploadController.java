@@ -35,6 +35,7 @@ public class UploadController {
     public ResponseEntity<?> handleUpload(
             @RequestParam("csvFile") MultipartFile csvFile,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+            @RequestParam(value = "manualTracking", required = false) String manualTracking,
             @RequestParam("rmb") double rmb,
             @RequestParam("rate") double rate,
             @RequestParam("boxes") int boxes,
@@ -69,7 +70,16 @@ public class UploadController {
                     .body("CSV file appears to be empty or has invalid format. Please check your CSV file contains the required columns: PO/NO., ITEM NO., DESCRIPTION OF GOODS, QTY, UNIT VALUE (USD)");
             }
 
-            String tracking = extractTrackingNumber(imageFile);
+            // Determine tracking number: prioritize manual input over image extraction
+            String tracking = "";
+            if (manualTracking != null && !manualTracking.trim().isEmpty()) {
+                tracking = manualTracking.trim();
+                System.out.println("Using manual tracking number: " + tracking);
+            } else {
+                tracking = extractTrackingNumber(imageFile);
+                System.out.println("Extracted tracking number from image: " + tracking);
+            }
+            
             String today = new SimpleDateFormat("yyMMdd").format(new Date());
 
             // Generate both files
@@ -409,9 +419,10 @@ public class UploadController {
             writer.write("ARRIVAL#: " + arrival + "\n");
             writer.write("AMNT:\n");
             writer.write("DATE:\n");
+            writer.write("\n"); // Empty row between DATE: and UPS FREIGHT:
             writer.write(String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f\n", weight, rmb, rate, upsFreight));
-            // Combine weight and boxes info in one cell
-            writer.write(String.format("WEIGHT & BOXES: %.1f KG - %d BOXES\n", weight, boxes));
+            // Combine weight and boxes info in one cell with new format
+            writer.write(String.format("WEIGHT & BOXES: %.1f KG || %d BOXES\n", weight, boxes));
             if (tracking != null && !tracking.isEmpty()) {
                 writer.write("UPS TRACKING#: " + tracking + "\n\n");
             } else {
@@ -421,6 +432,9 @@ public class UploadController {
             writer.write("P.O#: " + po + "\n");
             // Add empty column between QTY and NOTES
             writer.write("PO#,ITEM#,QTY,,NOTES\n");
+            
+            // Calculate total quantity
+            int totalQty = 0;
             for (InvoiceEntry entry : invoiceEntries) {
                 writer.write(
                         entry.getPoNo() + "," +
@@ -429,7 +443,11 @@ public class UploadController {
                                 "," + // Empty column
                                 "" + "\n" // Empty notes field as per requirement
                 );
+                totalQty += entry.getQty();
             }
+            
+            // Add total qty row at the end
+            writer.write(",,TOTAL QTY: " + totalQty + ",,\n");
         }
         return file;
     }

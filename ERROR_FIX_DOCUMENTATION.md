@@ -32,7 +32,7 @@ The application has been updated to use **Aspose.OCR for Java** instead of Tesse
 ### Current Status
 ✅ **RESOLVED**: The application now processes file uploads successfully and generates the expected ZIP files containing:
 - Packing list CSV with headers: PO#, ITEM#, QTY, NOTES
-- Invoice CSV with headers: PO#, ITEM#, QTY, FOB (MS-DOS format)
+- Invoice CSV with headers: PO#, ITEM#, CASE_QTY, FOB (MS-DOS format)
 
 ### Testing Confirmed
 - File upload functionality works correctly

@@ -218,26 +218,39 @@ public class UploadController {
     public String extractTrackingNumber(MultipartFile image) throws Exception {
         // If no image is provided, return empty string
         if (image == null || image.isEmpty()) {
+            System.out.println("No image provided for tracking extraction");
             return "";
         }
+        
+        System.out.println("Processing image: " + image.getOriginalFilename() + 
+                          " (size: " + image.getSize() + " bytes, type: " + image.getContentType() + ")");
         
         File temp = File.createTempFile("ups", ".png");
         try {
             // Save uploaded image to temporary file
             image.transferTo(temp);
             
+            // Validate image before OCR
+            if (!isValidImage(temp)) {
+                System.out.println("Invalid or too small image, trying text extraction fallback");
+                return tryTextExtraction(image);
+            }
+            
             // First try OCR extraction
             String ocrResult = tryOCRExtraction(temp);
             if (!ocrResult.isEmpty()) {
+                System.out.println("OCR extraction successful: " + ocrResult);
                 return ocrResult;
             }
             
             // Fallback: if it's a text file (for testing), read it directly
             String textResult = tryTextExtraction(image);
             if (!textResult.isEmpty()) {
+                System.out.println("Text extraction successful: " + textResult);
                 return textResult;
             }
             
+            System.out.println("No tracking number found in image");
             return "";
         } catch (Exception e) {
             // Log the error for debugging
@@ -248,6 +261,7 @@ public class UploadController {
             try {
                 String textResult = tryTextExtraction(image);
                 if (!textResult.isEmpty()) {
+                    System.out.println("Fallback text extraction successful: " + textResult);
                     return textResult;
                 }
             } catch (Exception fallbackException) {
@@ -266,6 +280,7 @@ public class UploadController {
     
     private String tryOCRExtraction(File imageFile) {
         try {
+            System.out.println("Initializing Aspose.OCR API...");
             // Initialize Aspose.OCR API
             AsposeOCR api = new AsposeOCR();
             
@@ -275,20 +290,26 @@ public class UploadController {
             
             // Configure recognition settings for better accuracy
             RecognitionSettings settings = new RecognitionSettings();
+            // Note: Advanced settings may not be available in this version of Aspose OCR
             
+            System.out.println("Performing OCR recognition on: " + imageFile.getAbsolutePath());
             // Perform OCR recognition
             ArrayList<RecognitionResult> results = api.Recognize(input, settings);
             
             if (results != null && !results.isEmpty()) {
                 String text = results.get(0).recognitionText;
-                if (text != null) {
+                System.out.println("OCR raw text result: '" + text + "'");
+                if (text != null && !text.trim().isEmpty()) {
                     return extractTrackingFromText(text);
                 }
+            } else {
+                System.out.println("OCR returned no results");
             }
             
             return "";
         } catch (Exception e) {
             System.err.println("OCR extraction failed: " + e.getMessage());
+            e.printStackTrace();
             return "";
         }
     }
@@ -299,14 +320,25 @@ public class UploadController {
             String contentType = file.getContentType();
             String filename = file.getOriginalFilename();
             
-            if ((contentType != null && contentType.startsWith("text/")) || 
-                (filename != null && filename.toLowerCase().endsWith(".txt"))) {
-                
+            System.out.println("Checking text extraction for file: " + filename + 
+                             " (content-type: " + contentType + ")");
+            
+            // Expanded text file detection
+            boolean isTextFile = (contentType != null && 
+                (contentType.startsWith("text/") || 
+                 contentType.equals("application/octet-stream"))) ||
+                (filename != null && 
+                 (filename.toLowerCase().endsWith(".txt") ||
+                  filename.toLowerCase().endsWith(".log")));
+            
+            if (isTextFile) {
                 // Read as text file
                 String content = new String(file.getBytes());
+                System.out.println("Text file content: '" + content + "'");
                 return extractTrackingFromText(content);
             }
             
+            System.out.println("File not recognized as text file");
             return "";
         } catch (Exception e) {
             System.err.println("Text extraction failed: " + e.getMessage());
@@ -319,12 +351,51 @@ public class UploadController {
             return "";
         }
         
-        // Extract UPS tracking number pattern: 1Z followed by 16 alphanumeric characters
-        // UPS tracking numbers are exactly 18 characters: 1Z + 16 alphanumeric
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("1Z[0-9A-Z]{16}");
-        java.util.regex.Matcher matcher = pattern.matcher(text.toUpperCase());
+        System.out.println("Extracting tracking from text: '" + text + "'");
         
-        return matcher.find() ? matcher.group() : "";
+        // Multiple UPS tracking patterns for better matching
+        String[] patterns = {
+            "1Z[0-9A-Z]{16}",           // Standard UPS format
+            "1Z\\s*[0-9A-Z]{16}",       // With optional space after 1Z
+            "1Z[0-9A-Z]{6}[0-9A-Z]{10}" // Alternative format
+        };
+        
+        String upperText = text.toUpperCase();
+        
+        for (String patternStr : patterns) {
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(patternStr);
+            java.util.regex.Matcher matcher = pattern.matcher(upperText);
+            if (matcher.find()) {
+                String result = matcher.group().replaceAll("\\s", ""); // Remove spaces
+                System.out.println("Found tracking number: " + result);
+                return result;
+            }
+        }
+        
+        System.out.println("No tracking number found in text");
+        return "";
+    }
+    
+    /**
+     * Validates if the image file is suitable for OCR processing
+     */
+    private boolean isValidImage(File imageFile) {
+        try {
+            // Check file size (should be > 1KB for meaningful content)
+            long fileSize = imageFile.length();
+            System.out.println("Image file size: " + fileSize + " bytes");
+            
+            if (fileSize < 1024) {
+                System.out.println("Image too small: " + fileSize + " bytes (minimum 1KB required)");
+                return false;
+            }
+            
+            // Additional validation could be added here (e.g., check image dimensions)
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error validating image: " + e.getMessage());
+            return false;
+        }
     }
 
 

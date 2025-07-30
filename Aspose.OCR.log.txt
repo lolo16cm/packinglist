@@ -2,3 +2,4 @@ Error: Error during read file.  2025-07-30T08:30:23.848885193
 Error: Error during read file.  2025-07-30T08:31:17.389712820
 Error: Error during read file.  2025-07-30T08:32:33.484489832
 Error: Error during read file.  2025-07-30T08:33:12.945389705
+Error: Error during region detection.  2025-07-30T08:39:00.376078670

@@ -40,7 +40,23 @@ public class UploadController {
 
         File packingList = generateCsv(today, entries, tracking, weight, boxes, rmb, rate);
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(packingList));
+        // Use FileSystemResource which properly handles cleanup and provides better support for temporary files
+        Resource resource = new org.springframework.core.io.FileSystemResource(packingList) {
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return new FileInputStream(packingList) {
+                    @Override
+                    public void close() throws IOException {
+                        super.close();
+                        // Delete the temporary file after the stream is closed
+                        if (packingList.exists()) {
+                            packingList.delete();
+                        }
+                    }
+                };
+            }
+        };
+        
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + packingList.getName())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -49,22 +65,28 @@ public class UploadController {
 
 
     public List<PackingEntry> parseCsv(MultipartFile file) throws IOException {
-        Reader reader = new InputStreamReader(file.getInputStream());
-        CSVFormat format = CSVFormat.DEFAULT.builder()
-                .setHeader()
-                .setSkipHeaderRecord(true)
-                .build();
-        Iterable<CSVRecord> records = format.parse(reader);
-
         List<PackingEntry> result = new ArrayList<>();
+        
+        // Use try-with-resources to ensure proper cleanup of streams
+        try (Reader reader = new InputStreamReader(file.getInputStream())) {
+            CSVFormat format = CSVFormat.DEFAULT.builder()
+                    .setHeader()
+                    .setSkipHeaderRecord(true)
+                    .build();
+            Iterable<CSVRecord> records = format.parse(reader);
 
-        for (CSVRecord record : records) {
-            result.add(new PackingEntry(
-                    record.get("PO.NO"),
-                    record.get("ITEM NO"),
-                    Integer.parseInt(record.get("QTY")),
-                    record.get("NOTES").isEmpty() ? "" : record.get("NOTES")
-            ));
+            for (CSVRecord record : records) {
+                // Safely parse quantity with proper error handling
+                int qty = parseQuantity(record.get("QTY"));
+                
+                result.add(new PackingEntry(
+                        record.get("PO.NO"),
+                        record.get("ITEM NO"),
+                        qty,
+                        // Safely handle NOTES field to prevent null pointer exceptions
+                        (record.get("NOTES") != null && !record.get("NOTES").isEmpty()) ? record.get("NOTES") : ""
+                ));
+            }
         }
         return result;
     }
@@ -72,10 +94,17 @@ public class UploadController {
     public String extractTrackingNumber(MultipartFile image) throws Exception {
         ITesseract tesseract = new Tesseract();
         File temp = File.createTempFile("ups", ".png");
-        image.transferTo(temp);
-        String text = tesseract.doOCR(temp);
-        Matcher matcher = Pattern.compile("1Z[0-9A-Z]{16}").matcher(text);
-        return matcher.find() ? matcher.group() : "NOT_FOUND";
+        try {
+            image.transferTo(temp);
+            String text = tesseract.doOCR(temp);
+            Matcher matcher = Pattern.compile("1Z[0-9A-Z]{16}").matcher(text);
+            return matcher.find() ? matcher.group() : "NOT_FOUND";
+        } finally {
+            // Always clean up the temporary file
+            if (temp.exists()) {
+                temp.delete();
+            }
+        }
     }
 
 
@@ -106,5 +135,35 @@ public class UploadController {
             }
         }
         return file;
+    }
+
+    /**
+     * Safely parses a quantity string to an integer with proper error handling.
+     * 
+     * @param qtyString The quantity string from CSV
+     * @return The parsed quantity as integer, or 0 if parsing fails
+     */
+    private int parseQuantity(String qtyString) {
+        if (qtyString == null || qtyString.trim().isEmpty()) {
+            // Return 0 for empty/null quantities
+            return 0;
+        }
+        
+        try {
+            // Trim whitespace and parse
+            String cleanQty = qtyString.trim();
+            
+            // Handle decimal numbers by parsing as double first, then converting to int
+            if (cleanQty.contains(".")) {
+                double doubleValue = Double.parseDouble(cleanQty);
+                return (int) Math.round(doubleValue);
+            }
+            
+            return Integer.parseInt(cleanQty);
+        } catch (NumberFormatException e) {
+            // Log the error and return 0 as default
+            System.err.println("Warning: Invalid quantity value '" + qtyString + "'. Using 0 as default.");
+            return 0;
+        }
     }
 }

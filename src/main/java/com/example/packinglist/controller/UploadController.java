@@ -210,6 +210,7 @@ public class UploadController {
             writer.write("ARRIVAL#: " + arrival + "\n");
             writer.write("AMNT:\n");
             writer.write("DATE:\n");
+            writer.write("\n"); // Empty row after DATE:
             writer.write(String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f\n", weight, rmb, rate, upsFreight));
             // Change format from dash to pipe
             writer.write(String.format("WEIGHT & BOXES: %.1f KG |%d BOXES\n", weight, boxes));
@@ -292,6 +293,7 @@ public class UploadController {
             writer.write("ARRIVAL#: " + arrival + "\n");
             writer.write("AMNT:\n");
             writer.write("DATE:\n");
+            writer.write("\n"); // Empty row after DATE:
             writer.write(String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f\n", weight, rmb, rate, upsFreight));
             writer.write(String.format("GROSS WEIGHT: %.1f KG |%d BOXES\n", weight, boxes));
             writer.write("UPS TRACKING#: \n\n");

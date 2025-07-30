@@ -226,34 +226,34 @@ public class UploadController {
             // Save uploaded image to temporary file
             image.transferTo(temp);
             
-            // Initialize Aspose.OCR API
-            AsposeOCR api = new AsposeOCR();
+            // First try OCR extraction
+            String ocrResult = tryOCRExtraction(temp);
+            if (!ocrResult.isEmpty()) {
+                return ocrResult;
+            }
             
-            // Create OCR input from the temporary file
-            OcrInput input = new OcrInput(InputType.SingleImage);
-            input.add(temp.getAbsolutePath());
-            
-            // Configure recognition settings for better accuracy
-            RecognitionSettings settings = new RecognitionSettings();
-            // Language setting - using auto-detection or default language
-            
-            // Perform OCR recognition
-            ArrayList<RecognitionResult> results = api.Recognize(input, settings);
-            
-            if (results != null && !results.isEmpty()) {
-                String text = results.get(0).recognitionText;
-                if (text != null) {
-                    // Extract UPS tracking number pattern: 1Z followed by 16 alphanumeric characters
-                    Matcher matcher = Pattern.compile("1Z[0-9A-Z]{16}").matcher(text.toUpperCase());
-                    return matcher.find() ? matcher.group() : "";
-                }
+            // Fallback: if it's a text file (for testing), read it directly
+            String textResult = tryTextExtraction(image);
+            if (!textResult.isEmpty()) {
+                return textResult;
             }
             
             return "";
         } catch (Exception e) {
             // Log the error for debugging
-            System.err.println("OCR Error: " + e.getMessage());
+            System.err.println("Tracking extraction error: " + e.getMessage());
             e.printStackTrace();
+            
+            // Try fallback text extraction
+            try {
+                String textResult = tryTextExtraction(image);
+                if (!textResult.isEmpty()) {
+                    return textResult;
+                }
+            } catch (Exception fallbackException) {
+                System.err.println("Fallback extraction also failed: " + fallbackException.getMessage());
+            }
+            
             // Return empty string instead of throwing exception to prevent app crash
             return "";
         } finally {
@@ -262,6 +262,69 @@ public class UploadController {
                 temp.delete();
             }
         }
+    }
+    
+    private String tryOCRExtraction(File imageFile) {
+        try {
+            // Initialize Aspose.OCR API
+            AsposeOCR api = new AsposeOCR();
+            
+            // Create OCR input from the temporary file
+            OcrInput input = new OcrInput(InputType.SingleImage);
+            input.add(imageFile.getAbsolutePath());
+            
+            // Configure recognition settings for better accuracy
+            RecognitionSettings settings = new RecognitionSettings();
+            
+            // Perform OCR recognition
+            ArrayList<RecognitionResult> results = api.Recognize(input, settings);
+            
+            if (results != null && !results.isEmpty()) {
+                String text = results.get(0).recognitionText;
+                if (text != null) {
+                    return extractTrackingFromText(text);
+                }
+            }
+            
+            return "";
+        } catch (Exception e) {
+            System.err.println("OCR extraction failed: " + e.getMessage());
+            return "";
+        }
+    }
+    
+    private String tryTextExtraction(MultipartFile file) {
+        try {
+            // Check if this might be a text file by content type or name
+            String contentType = file.getContentType();
+            String filename = file.getOriginalFilename();
+            
+            if ((contentType != null && contentType.startsWith("text/")) || 
+                (filename != null && filename.toLowerCase().endsWith(".txt"))) {
+                
+                // Read as text file
+                String content = new String(file.getBytes());
+                return extractTrackingFromText(content);
+            }
+            
+            return "";
+        } catch (Exception e) {
+            System.err.println("Text extraction failed: " + e.getMessage());
+            return "";
+        }
+    }
+    
+    private String extractTrackingFromText(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        
+        // Extract UPS tracking number pattern: 1Z followed by 16 alphanumeric characters
+        // UPS tracking numbers are exactly 18 characters: 1Z + 16 alphanumeric
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("1Z[0-9A-Z]{16}");
+        java.util.regex.Matcher matcher = pattern.matcher(text.toUpperCase());
+        
+        return matcher.find() ? matcher.group() : "";
     }
 
 
@@ -276,7 +339,8 @@ public class UploadController {
             writer.write("AMNT:\n");
             writer.write("DATE:\n");
             writer.write(String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f\n", weight, rmb, rate, upsFreight));
-            writer.write(String.format("GROSS WEIGHT: %.1f KG, %d BOXES\n", weight, boxes));
+            // Combine weight and boxes info in one cell
+            writer.write(String.format("WEIGHT & BOXES: %.1f KG - %d BOXES\n", weight, boxes));
             if (tracking != null && !tracking.isEmpty()) {
                 writer.write("UPS TRACKING#: " + tracking + "\n\n");
             } else {
@@ -284,12 +348,14 @@ public class UploadController {
             }
 
             writer.write("P.O#: " + po + "\n");
-            writer.write("PO#,ITEM#,QTY,NOTES\n");
+            // Add empty column between QTY and NOTES
+            writer.write("PO#,ITEM#,QTY,,NOTES\n");
             for (InvoiceEntry entry : invoiceEntries) {
                 writer.write(
                         entry.getPoNo() + "," +
                                 entry.getItemNo() + "," +
                                 entry.getQty() + "," +
+                                "," + // Empty column
                                 "" + "\n" // Empty notes field as per requirement
                 );
             }

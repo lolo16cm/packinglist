@@ -76,19 +76,45 @@ public class UploadController {
             Iterable<CSVRecord> records = format.parse(reader);
 
             for (CSVRecord record : records) {
+                // Handle different possible column header formats
+                String poNo = getFieldValue(record, "PO.NO", "PO/NO.");
+                String itemNo = getFieldValue(record, "ITEM NO", "ITEM NO.");
+                String notes = getFieldValue(record, "NOTES", "");
+                
                 // Safely parse quantity with proper error handling
                 int qty = parseQuantity(record.get("QTY"));
                 
                 result.add(new PackingEntry(
-                        record.get("PO.NO"),
-                        record.get("ITEM NO"),
+                        poNo,
+                        itemNo,
                         qty,
                         // Safely handle NOTES field to prevent null pointer exceptions
-                        (record.get("NOTES") != null && !record.get("NOTES").isEmpty()) ? record.get("NOTES") : ""
+                        (notes != null && !notes.isEmpty()) ? notes : ""
                 ));
             }
         }
         return result;
+    }
+
+    /**
+     * Helper method to get field value with fallback column names
+     */
+    private String getFieldValue(CSVRecord record, String primaryHeader, String fallbackHeader) {
+        try {
+            // Try primary header first
+            if (record.isMapped(primaryHeader)) {
+                return record.get(primaryHeader);
+            }
+            // Try fallback header
+            if (record.isMapped(fallbackHeader)) {
+                return record.get(fallbackHeader);
+            }
+            // Return empty string if neither exists
+            return "";
+        } catch (IllegalArgumentException e) {
+            // If neither header exists, return empty string
+            return "";
+        }
     }
 
     public String extractTrackingNumber(MultipartFile image) throws Exception {

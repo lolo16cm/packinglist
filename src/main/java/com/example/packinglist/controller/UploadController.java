@@ -31,26 +31,38 @@ public class UploadController {
             @RequestParam("rmb") double rmb,
             @RequestParam("rate") double rate,
             @RequestParam("boxes") int boxes,
-            @RequestParam("weight") double weight // ✅ New: manual input
+            @RequestParam("weight") double weight,
+            @RequestParam(value = "fileType", defaultValue = "packing") String fileType // New parameter to choose file type
     ) throws Exception {
 
         List<PackingEntry> entries = parseCsv(csvFile);
         String tracking = extractTrackingNumber(imageFile);
         String today = new SimpleDateFormat("yyMMdd").format(new Date());
 
-        File packingList = generateCsv(today, entries, tracking, weight, boxes, rmb, rate);
+        File outputFile;
+        String fileName;
+        
+        if ("fob".equals(fileType)) {
+            // Generate FOB CSV file
+            outputFile = generateFobCsv(today, entries);
+            fileName = "fob-" + today + ".csv";
+        } else {
+            // Generate standard packing list
+            outputFile = generatePackingListCsv(today, entries, tracking, weight, boxes, rmb, rate);
+            fileName = "packing-list-" + today + ".csv";
+        }
 
         // Use FileSystemResource which properly handles cleanup and provides better support for temporary files
-        Resource resource = new org.springframework.core.io.FileSystemResource(packingList) {
+        Resource resource = new org.springframework.core.io.FileSystemResource(outputFile) {
             @Override
             public InputStream getInputStream() throws IOException {
-                return new FileInputStream(packingList) {
+                return new FileInputStream(outputFile) {
                     @Override
                     public void close() throws IOException {
                         super.close();
                         // Delete the temporary file after the stream is closed
-                        if (packingList.exists()) {
-                            packingList.delete();
+                        if (outputFile.exists()) {
+                            outputFile.delete();
                         }
                     }
                 };
@@ -58,7 +70,7 @@ public class UploadController {
         };
         
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + packingList.getName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
     }
@@ -76,20 +88,23 @@ public class UploadController {
             Iterable<CSVRecord> records = format.parse(reader);
 
             for (CSVRecord record : records) {
-                // Handle different possible column header formats
+                // Handle different possible column header formats for invoice
                 String poNo = getFieldValue(record, "PO.NO", "PO/NO.");
                 String itemNo = getFieldValue(record, "ITEM NO", "ITEM NO.");
-                String notes = getFieldValue(record, "NOTES", "");
+                String unitValue = getFieldValue(record, "UNIT VALUE(USD)", "");
                 
                 // Safely parse quantity with proper error handling
                 int qty = parseQuantity(record.get("QTY"));
+                
+                // Parse unit value for FOB file generation
+                double unitValueDouble = parseUnitValue(unitValue);
                 
                 result.add(new PackingEntry(
                         poNo,
                         itemNo,
                         qty,
-                        // Safely handle NOTES field to prevent null pointer exceptions
-                        (notes != null && !notes.isEmpty()) ? notes : ""
+                        "", // Notes field - empty for now, will be populated as needed
+                        unitValueDouble // Add unit value to model
                 ));
             }
         }

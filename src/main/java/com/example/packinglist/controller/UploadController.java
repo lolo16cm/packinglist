@@ -70,9 +70,10 @@ public class UploadController {
             // Generate both files
             File packingList = generatePackingList(today, invoiceEntries, tracking, weight, boxes, rmb, rate);
             File msdosCsv = generateMsdosCsv(today, invoiceEntries);
+            File packingListHtml = generatePackingListHtml(today, invoiceEntries, tracking, weight, boxes, rmb, rate);
             
-            // Create a ZIP file containing both files
-            File zipFile = createZipFile(today, packingList, msdosCsv);
+            // Create a ZIP file containing all files
+            File zipFile = createZipFile(today, packingList, msdosCsv, packingListHtml);
 
             // Use FileSystemResource which properly handles cleanup and provides better support for temporary files
             Resource resource = new org.springframework.core.io.FileSystemResource(zipFile) {
@@ -85,6 +86,7 @@ public class UploadController {
                             // Delete the temporary files after the stream is closed
                             if (packingList.exists()) packingList.delete();
                             if (msdosCsv.exists()) msdosCsv.delete();
+                            if (packingListHtml.exists()) packingListHtml.delete(); // Added for HTML
                             if (zipFile.exists()) zipFile.delete();
                         }
                     };
@@ -254,6 +256,94 @@ public class UploadController {
         return file;
     }
 
+    public File generatePackingListHtml(String date, List<InvoiceEntry> invoiceEntries, String tracking, double weight, int boxes, double rmb, double rate) throws IOException {
+        String arrival = "XR" + date;
+        String po = "W" + date;
+        double upsFreight = weight * rmb / rate;
+
+        File file = File.createTempFile("packing-list-" + date, ".html");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write("<!DOCTYPE html>\n");
+            writer.write("<html>\n<head>\n");
+            writer.write("<meta charset=\"UTF-8\">\n");
+            writer.write("<title>Packing List - " + date + "</title>\n");
+            writer.write("<style>\n");
+            writer.write("body { font-family: Arial, sans-serif; margin: 20px; }\n");
+            writer.write("table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }\n");
+            writer.write("td, th { padding: 8px; text-align: left; }\n");
+            writer.write(".bold-border { border: 2px solid #000 !important; }\n");
+            writer.write(".header-info { border: 2px solid #000; background-color: #f8f8f8; }\n");
+            writer.write(".data-table { border: 1px solid #000; }\n");
+            writer.write(".data-table th { border: 2px solid #000; background-color: #f0f0f0; font-weight: bold; }\n");
+            writer.write(".data-table td { border: 1px solid #000; }\n");
+            writer.write(".total-row { border: 2px solid #000 !important; font-weight: bold; }\n");
+            writer.write(".freight-info { border: 2px solid #000; background-color: #f8f8f8; }\n");
+            writer.write("</style>\n");
+            writer.write("</head>\n<body>\n");
+
+            // Header information table
+            writer.write("<table>\n");
+            writer.write("<tr><td class=\"header-info\">ARRIVAL#: " + arrival + "</td></tr>\n");
+            writer.write("<tr><td class=\"header-info\">AMNT:</td></tr>\n");
+            writer.write("<tr><td class=\"header-info\">DATE:</td></tr>\n");
+            writer.write("</table>\n");
+
+            // UPS Freight information
+            writer.write("<table>\n");
+            writer.write("<tr><td class=\"freight-info\">" + 
+                String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f", weight, rmb, rate, upsFreight) + 
+                "</td></tr>\n");
+            writer.write("<tr><td class=\"freight-info\">" + 
+                String.format("WEIGHT & BOXES: %.1f KG || %d BOXES", weight, boxes) + 
+                "</td></tr>\n");
+            writer.write("<tr><td class=\"freight-info\">UPS TRACKING#: " + 
+                (tracking != null && !tracking.isEmpty() ? tracking : "") + 
+                "</td></tr>\n");
+            writer.write("</table>\n");
+
+            // P.O# information
+            writer.write("<table>\n");
+            writer.write("<tr><td class=\"header-info\">P.O#: " + po + "</td></tr>\n");
+            writer.write("</table>\n");
+
+            // Data table
+            writer.write("<table class=\"data-table\">\n");
+            writer.write("<tr>\n");
+            writer.write("<th>PO#</th>\n");
+            writer.write("<th>ITEM#</th>\n");
+            writer.write("<th>QTY</th>\n");
+            writer.write("<th></th>\n"); // Empty column
+            writer.write("<th>NOTES</th>\n");
+            writer.write("</tr>\n");
+            
+            // Calculate total quantity and write data rows
+            int totalQty = 0;
+            for (InvoiceEntry entry : invoiceEntries) {
+                writer.write("<tr>\n");
+                writer.write("<td>" + entry.getPoNo() + "</td>\n");
+                writer.write("<td>" + entry.getItemNo() + "</td>\n");
+                writer.write("<td>" + entry.getQty() + "</td>\n");
+                writer.write("<td></td>\n"); // Empty column
+                writer.write("<td></td>\n"); // Empty notes field
+                writer.write("</tr>\n");
+                totalQty += entry.getQty();
+            }
+            
+            // Total quantity row
+            writer.write("<tr class=\"total-row\">\n");
+            writer.write("<td></td>\n");
+            writer.write("<td></td>\n");
+            writer.write("<td>TOTAL QTY: " + totalQty + "</td>\n");
+            writer.write("<td></td>\n");
+            writer.write("<td></td>\n");
+            writer.write("</tr>\n");
+            writer.write("</table>\n");
+
+            writer.write("</body>\n</html>\n");
+        }
+        return file;
+    }
+
     public File generateMsdosCsv(String date, List<InvoiceEntry> invoiceEntries) throws IOException {
         File file = File.createTempFile("import_inv-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
@@ -271,12 +361,15 @@ public class UploadController {
         return file;
     }
 
-    public File createZipFile(String date, File packingList, File msdosCsv) throws IOException {
+    public File createZipFile(String date, File packingList, File msdosCsv, File packingListHtml) throws IOException {
         File zipFile = File.createTempFile("packing-files-" + date, ".zip");
         
         try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
-            // Add packing list to zip
+            // Add packing list CSV to zip
             addFileToZip(zos, packingList, "packing-list-" + date + ".csv");
+            
+            // Add packing list HTML to zip (with bold borders)
+            addFileToZip(zos, packingListHtml, "packing-list-" + date + ".html");
             
             // Add MS-DOS CSV to zip
             addFileToZip(zos, msdosCsv, "import_inv-" + date + ".csv");

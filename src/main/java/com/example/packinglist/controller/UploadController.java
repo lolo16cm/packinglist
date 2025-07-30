@@ -276,6 +276,7 @@ public class UploadController {
             writer.write(".data-table { border: 1px solid #000; }\n");
             writer.write(".data-table th { border: 2px solid #000; background-color: #f0f0f0; font-weight: bold; }\n");
             writer.write(".data-table td { border: 1px solid #000; }\n");
+            writer.write(".center { text-align: center; }\n");
             writer.write(".total-row { border: 2px solid #000 !important; font-weight: bold; }\n");
             writer.write(".freight-info { border: 2px solid #000; background-color: #f8f8f8; }\n");
             writer.write("</style>\n");
@@ -311,8 +312,8 @@ public class UploadController {
             writer.write("<tr>\n");
             writer.write("<th>PO#</th>\n");
             writer.write("<th>ITEM#</th>\n");
-            writer.write("<th style=\"width: 20%;\">QTY</th>\n");
-            writer.write("<th style=\"width: 20%;\">&nbsp;</th>\n");
+            writer.write("<th class=\"center\" style=\"width: 20%;\">QTY</th>\n");
+            writer.write("<th class=\"center\" style=\"width: 20%;\">Receive check</th>\n");
             writer.write("<th>NOTES</th>\n");
             writer.write("</tr>\n");
             
@@ -322,8 +323,8 @@ public class UploadController {
                 writer.write("<tr>\n");
                 writer.write("<td>" + entry.getPoNo() + "</td>\n");
                 writer.write("<td>" + entry.getItemNo() + "</td>\n");
-                writer.write("<td>" + entry.getQty() + "</td>\n");
-                writer.write("<td></td>\n"); // Empty column
+                writer.write("<td class=\"center\">" + entry.getQty() + "</td>\n");
+                writer.write("<td class=\"center\"></td>\n"); // Empty Receive check column
                 writer.write("<td></td>\n"); // Empty notes field
                 writer.write("</tr>\n");
                 totalQty += entry.getQty();
@@ -333,8 +334,8 @@ public class UploadController {
             writer.write("<tr class=\"total-row\">\n");
             writer.write("<td></td>\n");
             writer.write("<td></td>\n");
-            writer.write("<td>TOTAL QTY: " + totalQty + "</td>\n");
-            writer.write("<td></td>\n");
+            writer.write("<td class=\"center\">TOTAL QTY: " + totalQty + "</td>\n");
+            writer.write("<td class=\"center\"></td>\n");
             writer.write("<td></td>\n");
             writer.write("</tr>\n");
             writer.write("</table>\n");

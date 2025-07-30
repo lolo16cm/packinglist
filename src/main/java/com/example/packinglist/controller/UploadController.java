@@ -311,8 +311,8 @@ public class UploadController {
             writer.write("<tr>\n");
             writer.write("<th>PO#</th>\n");
             writer.write("<th>ITEM#</th>\n");
-            writer.write("<th style=\"width: 25%;\">QTY</th>\n");
-            writer.write("<th style=\"width: 25%;\">&nbsp;</th>\n");
+            writer.write("<th style=\"width: 20%;\">QTY</th>\n");
+            writer.write("<th style=\"width: 20%;\">&nbsp;</th>\n");
             writer.write("<th>NOTES</th>\n");
             writer.write("</tr>\n");
             

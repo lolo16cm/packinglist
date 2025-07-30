@@ -267,8 +267,8 @@ public class UploadController {
     public File generateMsdosCsv(String date, List<InvoiceEntry> invoiceEntries) throws IOException {
         File file = File.createTempFile("import_inv-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            // Write MS-DOS style CSV with headers: PO#, ITEM#, CASE_QTY, FOB
-            writer.write("PO#,ITEM#,CASE_QTY,FOB\r\n"); // MS-DOS line ending
+                    // Write MS-DOS style CSV with headers: PO#, ITEM#, QTY, FOB
+        writer.write("PO#,ITEM#,QTY,FOB\r\n"); // MS-DOS line ending
             for (InvoiceEntry entry : invoiceEntries) {
                 writer.write(
                         entry.getPoNo() + "," +

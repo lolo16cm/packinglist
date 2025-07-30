@@ -30,7 +30,6 @@ public class UploadController {
     @PostMapping("/upload")
     public ResponseEntity<?> handleUpload(
             @RequestParam("csvFile") MultipartFile csvFile,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
             @RequestParam(value = "manualTracking", required = false) String manualTracking,
             @RequestParam("rmb") double rmb,
             @RequestParam("rate") double rate,
@@ -49,15 +48,6 @@ public class UploadController {
             if (csvContentType == null || (!csvContentType.equals("text/csv") && !csvContentType.equals("application/vnd.ms-excel"))) {
                 return ResponseEntity.badRequest()
                     .body("Please upload a valid CSV file");
-            }
-
-            // Validate image file only if provided
-            if (imageFile != null && !imageFile.isEmpty()) {
-                String imageContentType = imageFile.getContentType();
-                if (imageContentType == null || !imageContentType.startsWith("image/")) {
-                    return ResponseEntity.badRequest()
-                        .body("Please upload a valid image file");
-                }
             }
 
             List<InvoiceEntry> invoiceEntries = parseInvoiceCsv(csvFile);
@@ -267,8 +257,8 @@ public class UploadController {
     public File generateMsdosCsv(String date, List<InvoiceEntry> invoiceEntries) throws IOException {
         File file = File.createTempFile("import_inv-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                    // Write MS-DOS style CSV with headers: PO#, ITEM#, QTY, FOB
-        writer.write("PO#,ITEM#,QTY,FOB\r\n"); // MS-DOS line ending
+                    // Write MS-DOS style CSV with headers: PO#, ITEM#, CASE_QTY, FOB
+        writer.write("PO#,ITEM#,CASE_QTY,FOB\r\n"); // MS-DOS line ending
             for (InvoiceEntry entry : invoiceEntries) {
                 writer.write(
                         entry.getPoNo() + "," +

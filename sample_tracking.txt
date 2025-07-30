@@ -1,3 +1,0 @@
-UPS Tracking Number: 1Z999AA12345678901
-This is a sample tracking document for testing OCR functionality.
-The tracking number should be extracted automatically.

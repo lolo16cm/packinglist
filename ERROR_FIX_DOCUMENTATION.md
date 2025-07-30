@@ -6,13 +6,12 @@
 The application was throwing a **Whitelabel Error Page** with a 500 Internal Server Error when users attempted to upload CSV and PNG files.
 
 ### Root Cause
-The application has been updated to use **Aspose.OCR for Java** instead of Tesseract for better reliability and accuracy. Aspose.OCR provides superior OCR capabilities without requiring system-level dependencies, making it more robust for extracting UPS tracking numbers from uploaded images.
+The application processes CSV files and allows manual entry of UPS tracking numbers for generating packing lists and invoices.
 
 ### Solution Implemented
 
 #### 1. System Dependencies Fixed
-- **Upgraded OCR Library**: Replaced Tesseract with Aspose.OCR for Java (version 25.6.0)
-- **Improved Reliability**: No longer requires system-level OCR installation
+- **Simplified Input**: Removed image upload functionality, now uses manual tracking number entry
 
 #### 2. Enhanced Error Handling
 - **Added comprehensive input validation** in the upload controller
@@ -36,17 +35,16 @@ The application has been updated to use **Aspose.OCR for Java** instead of Tesse
 
 ### Testing Confirmed
 - File upload functionality works correctly
-- OCR processing extracts tracking numbers from images
+- Manual tracking number input for UPS tracking
 - CSV parsing handles the required columns properly
 - ZIP file generation and download works as expected
 - Error handling provides meaningful feedback to users
 
 ### File Requirements (for users)
 - **CSV File**: Must contain columns: PO/NO., ITEM NO., DESCRIPTION OF GOODS, QTY, UNIT VALUE (USD)
-- **Image File**: Should be a clear image containing a UPS tracking number (format: 1Z + 16 alphanumeric characters)
+
 - **Additional Parameters**: RMB amount, exchange rate, number of boxes, total weight
 
 ### Dependencies Added
-- Aspose.OCR for Java 25.6.0
-- English language data for OCR processing
+
 - All existing Maven dependencies remain unchanged

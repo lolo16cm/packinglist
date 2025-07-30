@@ -30,7 +30,7 @@ public class UploadController {
     @PostMapping("/upload")
     public ResponseEntity<?> handleUpload(
             @RequestParam("csvFile") MultipartFile csvFile,
-            @RequestParam("imageFile") MultipartFile imageFile,
+            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
             @RequestParam("rmb") double rmb,
             @RequestParam("rate") double rate,
             @RequestParam("boxes") int boxes,
@@ -42,11 +42,6 @@ public class UploadController {
                 return ResponseEntity.badRequest()
                     .body("CSV file is required and cannot be empty");
             }
-            
-            if (imageFile.isEmpty()) {
-                return ResponseEntity.badRequest()
-                    .body("Image file is required and cannot be empty");
-            }
 
             // Validate file types
             String csvContentType = csvFile.getContentType();
@@ -55,10 +50,13 @@ public class UploadController {
                     .body("Please upload a valid CSV file");
             }
 
-            String imageContentType = imageFile.getContentType();
-            if (imageContentType == null || !imageContentType.startsWith("image/")) {
-                return ResponseEntity.badRequest()
-                    .body("Please upload a valid image file");
+            // Validate image file only if provided
+            if (imageFile != null && !imageFile.isEmpty()) {
+                String imageContentType = imageFile.getContentType();
+                if (imageContentType == null || !imageContentType.startsWith("image/")) {
+                    return ResponseEntity.badRequest()
+                        .body("Please upload a valid image file");
+                }
             }
 
             List<InvoiceEntry> invoiceEntries = parseInvoiceCsv(csvFile);
@@ -214,13 +212,18 @@ public class UploadController {
     }
 
     public String extractTrackingNumber(MultipartFile image) throws Exception {
+        // If no image is provided, return empty string
+        if (image == null || image.isEmpty()) {
+            return "";
+        }
+        
         ITesseract tesseract = new Tesseract();
         File temp = File.createTempFile("ups", ".png");
         try {
             image.transferTo(temp);
             String text = tesseract.doOCR(temp);
             Matcher matcher = Pattern.compile("1Z[0-9A-Z]{16}").matcher(text);
-            return matcher.find() ? matcher.group() : "NOT_FOUND";
+            return matcher.find() ? matcher.group() : "";
         } finally {
             // Always clean up the temporary file
             if (temp.exists()) {
@@ -242,7 +245,11 @@ public class UploadController {
             writer.write("DATE:\n");
             writer.write(String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f\n", weight, rmb, rate, upsFreight));
             writer.write(String.format("GROSS WEIGHT: %.1f KG, %d BOXES\n", weight, boxes));
-            writer.write("UPS TRACKING#: " + tracking + "\n\n");
+            if (tracking != null && !tracking.isEmpty()) {
+                writer.write("UPS TRACKING#: " + tracking + "\n\n");
+            } else {
+                writer.write("UPS TRACKING#: \n\n");
+            }
 
             writer.write("P.O#: " + po + "\n");
             writer.write("PO#,ITEM#,QTY,NOTES\n");
@@ -316,7 +323,11 @@ public class UploadController {
             writer.write("DATE:\n");
             writer.write(String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f\n", weight, rmb, rate, upsFreight));
             writer.write(String.format("GROSS WEIGHT: %.1f KG, %d BOXES\n", weight, boxes));
-            writer.write("UPS TRACKING#: " + tracking + "\n\n");
+            if (tracking != null && !tracking.isEmpty()) {
+                writer.write("UPS TRACKING#: " + tracking + "\n\n");
+            } else {
+                writer.write("UPS TRACKING#: \n\n");
+            }
 
             writer.write("P.O#: " + po + "\n");
             writer.write("PO/NO.,ITEM NO,QTY,NOTES\n");

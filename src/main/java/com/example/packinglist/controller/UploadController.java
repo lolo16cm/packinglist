@@ -28,47 +28,100 @@ public class UploadController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<Resource> handleUpload(
+    public ResponseEntity<?> handleUpload(
             @RequestParam("csvFile") MultipartFile csvFile,
             @RequestParam("imageFile") MultipartFile imageFile,
             @RequestParam("rmb") double rmb,
             @RequestParam("rate") double rate,
             @RequestParam("boxes") int boxes,
             @RequestParam("weight") double weight // ✅ New: manual input
-    ) throws Exception {
-
-        List<InvoiceEntry> invoiceEntries = parseInvoiceCsv(csvFile);
-        String tracking = extractTrackingNumber(imageFile);
-        String today = new SimpleDateFormat("yyMMdd").format(new Date());
-
-        // Generate both files
-        File packingList = generatePackingList(today, invoiceEntries, tracking, weight, boxes, rmb, rate);
-        File msdosCsv = generateMsdosCsv(today, invoiceEntries);
-        
-        // Create a ZIP file containing both files
-        File zipFile = createZipFile(today, packingList, msdosCsv);
-
-        // Use FileSystemResource which properly handles cleanup and provides better support for temporary files
-        Resource resource = new org.springframework.core.io.FileSystemResource(zipFile) {
-            @Override
-            public InputStream getInputStream() throws IOException {
-                return new FileInputStream(zipFile) {
-                    @Override
-                    public void close() throws IOException {
-                        super.close();
-                        // Delete the temporary files after the stream is closed
-                        if (packingList.exists()) packingList.delete();
-                        if (msdosCsv.exists()) msdosCsv.delete();
-                        if (zipFile.exists()) zipFile.delete();
-                    }
-                };
+    ) {
+        try {
+            // Validate input files
+            if (csvFile.isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body("CSV file is required and cannot be empty");
             }
-        };
-        
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=packing-files-" + today + ".zip")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
+            
+            if (imageFile.isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body("Image file is required and cannot be empty");
+            }
+
+            // Validate file types
+            String csvContentType = csvFile.getContentType();
+            if (csvContentType == null || (!csvContentType.equals("text/csv") && !csvContentType.equals("application/vnd.ms-excel"))) {
+                return ResponseEntity.badRequest()
+                    .body("Please upload a valid CSV file");
+            }
+
+            String imageContentType = imageFile.getContentType();
+            if (imageContentType == null || !imageContentType.startsWith("image/")) {
+                return ResponseEntity.badRequest()
+                    .body("Please upload a valid image file");
+            }
+
+            List<InvoiceEntry> invoiceEntries = parseInvoiceCsv(csvFile);
+            if (invoiceEntries.isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body("CSV file appears to be empty or has invalid format. Please check your CSV file contains the required columns: PO/NO., ITEM NO., DESCRIPTION OF GOODS, QTY, UNIT VALUE (USD)");
+            }
+
+            String tracking = extractTrackingNumber(imageFile);
+            String today = new SimpleDateFormat("yyMMdd").format(new Date());
+
+            // Generate both files
+            File packingList = generatePackingList(today, invoiceEntries, tracking, weight, boxes, rmb, rate);
+            File msdosCsv = generateMsdosCsv(today, invoiceEntries);
+            
+            // Create a ZIP file containing both files
+            File zipFile = createZipFile(today, packingList, msdosCsv);
+
+            // Use FileSystemResource which properly handles cleanup and provides better support for temporary files
+            Resource resource = new org.springframework.core.io.FileSystemResource(zipFile) {
+                @Override
+                public InputStream getInputStream() throws IOException {
+                    return new FileInputStream(zipFile) {
+                        @Override
+                        public void close() throws IOException {
+                            super.close();
+                            // Delete the temporary files after the stream is closed
+                            if (packingList.exists()) packingList.delete();
+                            if (msdosCsv.exists()) msdosCsv.delete();
+                            if (zipFile.exists()) zipFile.delete();
+                        }
+                    };
+                }
+            };
+            
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=packing-files-" + today + ".zip")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+
+        } catch (Exception e) {
+            // Log the error for debugging
+            System.err.println("Error processing upload: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Return user-friendly error message
+            String errorMessage = "An error occurred while processing your files. ";
+            if (e.getMessage() != null) {
+                if (e.getMessage().contains("tesseract") || e.getMessage().contains("OCR")) {
+                    errorMessage += "There was an issue processing the image file. Please ensure it's a clear image containing a UPS tracking number.";
+                } else if (e.getMessage().contains("CSV") || e.getMessage().contains("parse")) {
+                    errorMessage += "There was an issue parsing the CSV file. Please check the file format and ensure it contains the required columns.";
+                } else {
+                    errorMessage += "Please check your files and try again.";
+                }
+            } else {
+                errorMessage += "Please check your files and try again.";
+            }
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(errorMessage);
+        }
     }
 
 

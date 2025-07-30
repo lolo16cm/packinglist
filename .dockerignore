@@ -1,0 +1,39 @@
+# Ignore Git
+.git
+.gitignore
+
+# Ignore build artifacts
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Ignore IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Ignore documentation
+*.md
+!README.md
+
+# Ignore test files
+src/test/
+
+# Ignore sample files
+*.csv
+*.txt
+*.png
+result.zip

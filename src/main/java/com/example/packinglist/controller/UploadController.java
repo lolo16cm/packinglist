@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -155,35 +154,13 @@ public class UploadController {
             }
         }
         
-        // Sort by item number: numerical ascending first, then alphabetical ascending
+        // Sort by item number: lexical (alphabetical) sorting
         result.sort((a, b) -> {
             String itemA = a.getItemNo();
             String itemB = b.getItemNo();
             
-            // Extract numeric part from item numbers for proper numerical sorting
-            Integer numA = extractNumericPart(itemA);
-            Integer numB = extractNumericPart(itemB);
-            
-            // If both have numeric parts, compare numerically first (ascending)
-            if (numA != null && numB != null) {
-                int numComparison = numA.compareTo(numB); // Natural order for ascending
-                if (numComparison != 0) {
-                    return numComparison; // Different numbers, sort numerically ascending
-                }
-                // If numeric parts are equal, sort alphabetically by the full string (ascending)
-                return itemA.compareTo(itemB); // Natural order for ascending
-            }
-            
-            // If only one has a numeric part, prioritize the one with numeric part
-            if (numA != null && numB == null) {
-                return -1; // A has number, B doesn't - A comes first
-            }
-            if (numA == null && numB != null) {
-                return 1; // B has number, A doesn't - B comes first
-            }
-            
-            // If neither has numeric parts, fall back to alphabetical comparison (ascending)
-            return itemA.compareTo(itemB); // Natural order for ascending
+            // Pure lexical comparison - treats everything as strings
+            return itemA.compareTo(itemB);
         });
         
         return result;
@@ -218,6 +195,16 @@ public class UploadController {
                 ));
             }
         }
+        
+        // Sort by item number: lexical (alphabetical) sorting
+        result.sort((a, b) -> {
+            String itemA = a.getItemNo();
+            String itemB = b.getItemNo();
+            
+            // Pure lexical comparison - treats everything as strings
+            return itemA.compareTo(itemB);
+        });
+        
         return result;
     }
 
@@ -513,29 +500,5 @@ public class UploadController {
         }
     }
 
-    /**
-     * Extracts the numeric part from an item number string for proper numerical sorting.
-     * 
-     * @param itemNo The item number string (e.g., "1015", "1016B", "1059EMGM")
-     * @return The numeric part as Integer, or null if no numeric part found
-     */
-    private Integer extractNumericPart(String itemNo) {
-        if (itemNo == null || itemNo.trim().isEmpty()) {
-            return null;
-        }
-        
-        // Use regex to find the first sequence of digits
-        Pattern pattern = Pattern.compile("(\\d+)");
-        Matcher matcher = pattern.matcher(itemNo);
-        
-        if (matcher.find()) {
-            try {
-                return Integer.parseInt(matcher.group(1));
-            } catch (NumberFormatException e) {
-                return null;
-            }
-        }
-        
-        return null;
-    }
+
 }

@@ -195,6 +195,16 @@ public class UploadController {
                 ));
             }
         }
+        
+        // Sort by item number: lexical (alphabetical) sorting
+        result.sort((a, b) -> {
+            String itemA = a.getItemNo();
+            String itemB = b.getItemNo();
+            
+            // Pure lexical comparison - treats everything as strings
+            return itemA.compareTo(itemB);
+        });
+        
         return result;
     }
 

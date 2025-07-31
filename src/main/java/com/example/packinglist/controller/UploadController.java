@@ -155,7 +155,7 @@ public class UploadController {
             }
         }
         
-        // Sort by item number: numerical descending first, then alphabetical descending
+        // Sort by item number: numerical ascending first, then alphabetical ascending
         result.sort((a, b) -> {
             String itemA = a.getItemNo();
             String itemB = b.getItemNo();
@@ -164,14 +164,14 @@ public class UploadController {
             Integer numA = extractNumericPart(itemA);
             Integer numB = extractNumericPart(itemB);
             
-            // If both have numeric parts, compare numerically first (descending)
+            // If both have numeric parts, compare numerically first (ascending)
             if (numA != null && numB != null) {
-                int numComparison = numB.compareTo(numA); // Reversed for descending
+                int numComparison = numA.compareTo(numB); // Natural order for ascending
                 if (numComparison != 0) {
-                    return numComparison; // Different numbers, sort numerically descending
+                    return numComparison; // Different numbers, sort numerically ascending
                 }
-                // If numeric parts are equal, sort alphabetically by the full string (descending)
-                return itemB.compareTo(itemA); // Reversed for descending
+                // If numeric parts are equal, sort alphabetically by the full string (ascending)
+                return itemA.compareTo(itemB); // Natural order for ascending
             }
             
             // If only one has a numeric part, prioritize the one with numeric part
@@ -182,8 +182,8 @@ public class UploadController {
                 return 1; // B has number, A doesn't - B comes first
             }
             
-            // If neither has numeric parts, fall back to alphabetical comparison (descending)
-            return itemB.compareTo(itemA); // Reversed for descending
+            // If neither has numeric parts, fall back to alphabetical comparison (ascending)
+            return itemA.compareTo(itemB); // Natural order for ascending
         });
         
         return result;

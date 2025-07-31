@@ -288,13 +288,14 @@ public class UploadController {
             writer.write("<title>Packing List - " + date + "</title>\n");
             writer.write("<style>\n");
             writer.write("@page { size: A4 portrait; margin: 0.5in; }\n");
-            writer.write("body { font-family: Arial, sans-serif; margin: 0; padding: 0; }\n");
+            writer.write("body { font-family: Arial, sans-serif; margin: 0; padding: 0; height: 100vh; }\n");
             writer.write(".page { page-break-after: always; min-height: 10in; }\n");
             writer.write(".page:last-child { page-break-after: avoid; }\n");
             writer.write("table { border-collapse: collapse; width: 100%; margin-bottom: 15px; }\n");
             writer.write("td, th { padding: 6px; text-align: left; }\n");
-            writer.write(".header-info { border: 2px solid #000; background-color: #f8f8f8; }\n");
-            writer.write(".freight-info { border: 2px solid #000; background-color: #f8f8f8; }\n");
+            writer.write(".header-section { height: 15vh; }\n"); // 15% of viewport height
+            writer.write(".header-info { border: 2px solid #000; background-color: #f8f8f8; height: 2.5vh; }\n"); // Each header row takes up part of the 15%
+            writer.write(".freight-info { border: 2px solid #000; background-color: #f8f8f8; height: 2.5vh; }\n");
             writer.write(".data-table { border: 1px solid #000; width: 48%; display: inline-table; vertical-align: top; }\n");
             writer.write(".data-table th { border: 2px solid #000; background-color: #f0f0f0; font-weight: bold; }\n");
             writer.write(".data-table td { border: 1px solid #000; }\n");
@@ -314,6 +315,7 @@ public class UploadController {
                 
                 // Header information table (only on first page)
                 if (page == 0) {
+                    writer.write("<div class=\"header-section\">\n");
                     writer.write("<table>\n");
                     writer.write("<tr><td class=\"header-info\">ARRIVAL#: " + arrival + "</td></tr>\n");
                     writer.write("<tr><td class=\"header-info\">AMNT:</td></tr>\n");
@@ -337,6 +339,7 @@ public class UploadController {
                     writer.write("<table>\n");
                     writer.write("<tr><td class=\"header-info\">P.O#: " + po + "</td></tr>\n");
                     writer.write("</table>\n");
+                    writer.write("</div>\n");
                 }
                 
                 // Container for two tables side by side
@@ -370,13 +373,7 @@ public class UploadController {
                         leftTableQty += entry.getQty();
                     }
                     
-                    // Total for left table
-                    writer.write("<tr class=\"total-row\">\n");
-                    writer.write("<td colspan=\"2\">TOTAL</td>\n");
-                    writer.write("<td class=\"center\">" + leftTableQty + "</td>\n");
-                    writer.write("<td class=\"center\"></td>\n");
-                    writer.write("<td></td>\n");
-                    writer.write("</tr>\n");
+                    // Remove individual table totals - will add one final total at the end
                     writer.write("</table>\n");
                     writer.write("</div>\n");
                 }
@@ -409,13 +406,7 @@ public class UploadController {
                         rightTableQty += entry.getQty();
                     }
                     
-                    // Total for right table
-                    writer.write("<tr class=\"total-row\">\n");
-                    writer.write("<td colspan=\"2\">TOTAL</td>\n");
-                    writer.write("<td class=\"center\">" + rightTableQty + "</td>\n");
-                    writer.write("<td class=\"center\"></td>\n");
-                    writer.write("<td></td>\n");
-                    writer.write("</tr>\n");
+                    // Remove individual table totals - will add one final total at the end
                     writer.write("</table>\n");
                     writer.write("</div>\n");
                 }
@@ -423,6 +414,16 @@ public class UploadController {
                 writer.write("</div>\n"); // Close table-container
                 writer.write("</div>\n"); // Close page
             }
+            
+            // Add final total quantity at the end
+            int totalQty = invoiceEntries.stream().mapToInt(InvoiceEntry::getQty).sum();
+            writer.write("<div style=\"margin-top: 20px; text-align: center;\">\n");
+            writer.write("<table style=\"width: 100%; border: 2px solid #000;\">\n");
+            writer.write("<tr class=\"total-row\" style=\"background-color: #f0f0f0;\">\n");
+            writer.write("<td style=\"padding: 10px; font-size: 18px; font-weight: bold; text-align: center; border: 2px solid #000;\">FINAL TOTAL QTY: " + totalQty + "</td>\n");
+            writer.write("</tr>\n");
+            writer.write("</table>\n");
+            writer.write("</div>\n");
 
             writer.write("</body>\n</html>\n");
         }

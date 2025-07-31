@@ -427,13 +427,13 @@ public class UploadController {
 
             // Add shipping information
             writer.write("<div style=\"margin-top: 20px; text-align: left; padding: 10px; border: 1px solid #000;\">\n");
-            writer.write("<h3 style=\"margin-bottom: 10px;\">SHIPPING INFORMATION</h3>\n");
             writer.write("<p><strong>ARRIVAL#:</strong> XR250731</p>\n");
             writer.write("<p><strong>AMNT:</strong></p>\n");
             writer.write("<p><strong>DATE:</strong></p>\n");
             writer.write("<p><strong>UPS FREIGHT:</strong> 163.0 KG * 3546 RMB / 5.00 RATE = $115599.60</p>\n");
             writer.write("<p><strong>WEIGHT & BOXES:</strong> 163.0 KG || 15 BOXES</p>\n");
             writer.write("<p><strong>UPS TRACKING#:</strong></p>\n");
+            writer.write("<p><strong>P.O#:</strong> W250731</p>\n");
             writer.write("</div>\n");
 
             writer.write("</body>\n</html>\n");

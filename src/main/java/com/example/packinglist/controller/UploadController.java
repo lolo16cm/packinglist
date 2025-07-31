@@ -256,9 +256,31 @@ public class UploadController {
             // Add empty column between QTY and NOTES
             writer.write("PO#,ITEM#,QTY,,NOTES\n");
             
-            // Calculate total quantity
-            int totalQty = 0;
+            // Group entries by PO# and ITEM# combination and aggregate quantities
+            Map<String, InvoiceEntry> aggregatedEntries = new LinkedHashMap<>();
+            
             for (InvoiceEntry entry : invoiceEntries) {
+                String key = entry.getPoNo() + "_" + entry.getItemNo();
+                
+                if (aggregatedEntries.containsKey(key)) {
+                    // Sum quantities for duplicate PO# + ITEM# combinations
+                    InvoiceEntry existing = aggregatedEntries.get(key);
+                    InvoiceEntry updated = new InvoiceEntry(
+                        existing.getPoNo(),
+                        existing.getItemNo(),
+                        existing.getDescription(),
+                        existing.getQty() + entry.getQty(),
+                        existing.getUnitValue()
+                    );
+                    aggregatedEntries.put(key, updated);
+                } else {
+                    aggregatedEntries.put(key, entry);
+                }
+            }
+            
+            // Calculate total quantity and write aggregated entries
+            int totalQty = 0;
+            for (InvoiceEntry entry : aggregatedEntries.values()) {
                 writer.write(
                         entry.getPoNo() + "," +
                                 entry.getItemNo() + "," +
@@ -336,9 +358,31 @@ public class UploadController {
             writer.write("<th>NOTES</th>\n");
             writer.write("</tr>\n");
             
-            // Calculate total quantity and write data rows
-            int totalQty = 0;
+            // Group entries by PO# and ITEM# combination and aggregate quantities
+            Map<String, InvoiceEntry> aggregatedEntries = new LinkedHashMap<>();
+            
             for (InvoiceEntry entry : invoiceEntries) {
+                String key = entry.getPoNo() + "_" + entry.getItemNo();
+                
+                if (aggregatedEntries.containsKey(key)) {
+                    // Sum quantities for duplicate PO# + ITEM# combinations
+                    InvoiceEntry existing = aggregatedEntries.get(key);
+                    InvoiceEntry updated = new InvoiceEntry(
+                        existing.getPoNo(),
+                        existing.getItemNo(),
+                        existing.getDescription(),
+                        existing.getQty() + entry.getQty(),
+                        existing.getUnitValue()
+                    );
+                    aggregatedEntries.put(key, updated);
+                } else {
+                    aggregatedEntries.put(key, entry);
+                }
+            }
+            
+            // Calculate total quantity and write aggregated data rows
+            int totalQty = 0;
+            for (InvoiceEntry entry : aggregatedEntries.values()) {
                 writer.write("<tr>\n");
                 writer.write("<td>" + entry.getPoNo() + "</td>\n");
                 writer.write("<td>" + entry.getItemNo() + "</td>\n");
@@ -367,9 +411,32 @@ public class UploadController {
     public File generateMsdosCsv(String date, List<InvoiceEntry> invoiceEntries) throws IOException {
         File file = File.createTempFile("import_inv-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                    // Write MS-DOS style CSV with headers: PO#, ITEM#, CASE_QTY, FOB
-        writer.write("PO#,ITEM#,CASE_QTY,FOB\r\n"); // MS-DOS line ending
+            // Write MS-DOS style CSV with headers: PO#, ITEM#, CASE_QTY, FOB
+            writer.write("PO#,ITEM#,CASE_QTY,FOB\r\n"); // MS-DOS line ending
+            
+            // Group entries by PO# and ITEM# combination and aggregate quantities
+            Map<String, InvoiceEntry> aggregatedEntries = new LinkedHashMap<>();
+            
             for (InvoiceEntry entry : invoiceEntries) {
+                String key = entry.getPoNo() + "_" + entry.getItemNo();
+                
+                if (aggregatedEntries.containsKey(key)) {
+                    // Sum quantities for duplicate PO# + ITEM# combinations
+                    InvoiceEntry existing = aggregatedEntries.get(key);
+                    InvoiceEntry updated = new InvoiceEntry(
+                        existing.getPoNo(),
+                        existing.getItemNo(),
+                        existing.getDescription(),
+                        existing.getQty() + entry.getQty(),
+                        existing.getUnitValue()
+                    );
+                    aggregatedEntries.put(key, updated);
+                } else {
+                    aggregatedEntries.put(key, entry);
+                }
+            }
+            
+            for (InvoiceEntry entry : aggregatedEntries.values()) {
                 writer.write(
                         entry.getPoNo() + "," +
                                 entry.getItemNo() + "," +

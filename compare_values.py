@@ -74,11 +74,26 @@ def compare_values(a, b):
             return 0
 
 
+def compare_values_reverse(a, b):
+    """
+    Custom comparison function for sorting values in DESCENDING order.
+    Returns: 1 if a < b, 0 if a == b, -1 if a > b (opposite of compare_values)
+    """
+    return -compare_values(a, b)
+
+
 def sort_values(values):
     """
     Sort a list of values using the custom comparison function.
     """
     return sorted(values, key=cmp_to_key(compare_values))
+
+
+def sort_values_reverse(values):
+    """
+    Sort a list of values in DESCENDING order using the custom comparison function.
+    """
+    return sorted(values, key=cmp_to_key(compare_values_reverse))
 
 
 def main():
@@ -87,7 +102,10 @@ def main():
     print("Original values:", test_values)
     
     sorted_values = sort_values(test_values)
-    print("Sorted values:", sorted_values)
+    print("Sorted values (ascending):", sorted_values)
+    
+    sorted_values_desc = sort_values_reverse(test_values)
+    print("Sorted values (descending):", sorted_values_desc)
     
     # Additional test cases
     print("\nAdditional test cases:")
@@ -102,7 +120,8 @@ def main():
     
     for i, test_case in enumerate(test_cases, 1):
         print(f"Test {i}: {test_case}")
-        print(f"Sorted: {sort_values(test_case)}")
+        print(f"Sorted (ascending): {sort_values(test_case)}")
+        print(f"Sorted (descending): {sort_values_reverse(test_case)}")
         print()
 
 

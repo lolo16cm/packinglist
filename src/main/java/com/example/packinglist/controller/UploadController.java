@@ -155,7 +155,7 @@ public class UploadController {
             }
         }
         
-        // Sort by item number: numerical ascending first, then alphabetical ascending
+        // Sort by item number: numerical descending first, then alphabetical descending
         result.sort((a, b) -> {
             String itemA = a.getItemNo();
             String itemB = b.getItemNo();
@@ -164,14 +164,14 @@ public class UploadController {
             Integer numA = extractNumericPart(itemA);
             Integer numB = extractNumericPart(itemB);
             
-            // If both have numeric parts, compare numerically first
+            // If both have numeric parts, compare numerically first (descending)
             if (numA != null && numB != null) {
-                int numComparison = numA.compareTo(numB);
+                int numComparison = numB.compareTo(numA); // Reversed for descending
                 if (numComparison != 0) {
-                    return numComparison; // Different numbers, sort numerically
+                    return numComparison; // Different numbers, sort numerically descending
                 }
-                // If numeric parts are equal, sort alphabetically by the full string
-                return itemA.compareTo(itemB);
+                // If numeric parts are equal, sort alphabetically by the full string (descending)
+                return itemB.compareTo(itemA); // Reversed for descending
             }
             
             // If only one has a numeric part, prioritize the one with numeric part
@@ -182,8 +182,8 @@ public class UploadController {
                 return 1; // B has number, A doesn't - B comes first
             }
             
-            // If neither has numeric parts, fall back to alphabetical comparison
-            return itemA.compareTo(itemB);
+            // If neither has numeric parts, fall back to alphabetical comparison (descending)
+            return itemB.compareTo(itemA); // Reversed for descending
         });
         
         return result;

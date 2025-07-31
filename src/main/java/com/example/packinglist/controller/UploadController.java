@@ -316,25 +316,6 @@ public class UploadController {
                 // Header information table (only on first page)
                 if (page == 0) {
                     writer.write("<div class=\"header-section\">\n");
-                    writer.write("<table>\n");
-                    writer.write("<tr><td class=\"header-info\">ARRIVAL#: " + arrival + "</td></tr>\n");
-                    writer.write("<tr><td class=\"header-info\">AMNT:</td></tr>\n");
-                    writer.write("<tr><td class=\"header-info\">DATE:</td></tr>\n");
-                    writer.write("</table>\n");
-
-                    // UPS Freight information
-                    writer.write("<table>\n");
-                    writer.write("<tr><td class=\"freight-info\">" + 
-                        String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f", weight, rmb, rate, upsFreight) + 
-                        "</td></tr>\n");
-                    writer.write("<tr><td class=\"freight-info\">" + 
-                        String.format("WEIGHT & BOXES: %.1f KG || %d BOXES", weight, boxes) + 
-                        "</td></tr>\n");
-                    writer.write("<tr><td class=\"freight-info\">UPS TRACKING#: " + 
-                        (tracking != null && !tracking.isEmpty() ? tracking : "") + 
-                        "</td></tr>\n");
-                    writer.write("</table>\n");
-
                     // P.O# information
                     writer.write("<table>\n");
                     writer.write("<tr><td class=\"header-info\">P.O#: " + po + "</td></tr>\n");

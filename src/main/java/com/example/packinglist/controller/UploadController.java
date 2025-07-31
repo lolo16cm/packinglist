@@ -287,77 +287,142 @@ public class UploadController {
             writer.write("<meta charset=\"UTF-8\">\n");
             writer.write("<title>Packing List - " + date + "</title>\n");
             writer.write("<style>\n");
-            writer.write("body { font-family: Arial, sans-serif; margin: 20px; }\n");
-            writer.write("table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }\n");
-            writer.write("td, th { padding: 8px; text-align: left; }\n");
-            writer.write(".bold-border { border: 2px solid #000 !important; }\n");
+            writer.write("@page { size: A4 portrait; margin: 0.5in; }\n");
+            writer.write("body { font-family: Arial, sans-serif; margin: 0; padding: 0; }\n");
+            writer.write(".page { page-break-after: always; min-height: 10in; }\n");
+            writer.write(".page:last-child { page-break-after: avoid; }\n");
+            writer.write("table { border-collapse: collapse; width: 100%; margin-bottom: 15px; }\n");
+            writer.write("td, th { padding: 6px; text-align: left; }\n");
             writer.write(".header-info { border: 2px solid #000; background-color: #f8f8f8; }\n");
-            writer.write(".data-table { border: 1px solid #000; }\n");
+            writer.write(".freight-info { border: 2px solid #000; background-color: #f8f8f8; }\n");
+            writer.write(".data-table { border: 1px solid #000; width: 48%; display: inline-table; vertical-align: top; }\n");
             writer.write(".data-table th { border: 2px solid #000; background-color: #f0f0f0; font-weight: bold; }\n");
             writer.write(".data-table td { border: 1px solid #000; }\n");
             writer.write(".center { text-align: center; }\n");
             writer.write(".total-row { border: 2px solid #000 !important; font-weight: bold; }\n");
-            writer.write(".freight-info { border: 2px solid #000; background-color: #f8f8f8; }\n");
+            writer.write(".table-container { display: flex; justify-content: space-between; }\n");
+            writer.write(".table-wrapper { width: 48%; }\n");
             writer.write("</style>\n");
             writer.write("</head>\n<body>\n");
 
-            // Header information table
-            writer.write("<table>\n");
-            writer.write("<tr><td class=\"header-info\">ARRIVAL#: " + arrival + "</td></tr>\n");
-            writer.write("<tr><td class=\"header-info\">AMNT:</td></tr>\n");
-            writer.write("<tr><td class=\"header-info\">DATE:</td></tr>\n");
-            writer.write("</table>\n");
-
-            // UPS Freight information
-            writer.write("<table>\n");
-            writer.write("<tr><td class=\"freight-info\">" + 
-                String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f", weight, rmb, rate, upsFreight) + 
-                "</td></tr>\n");
-            writer.write("<tr><td class=\"freight-info\">" + 
-                String.format("WEIGHT & BOXES: %.1f KG || %d BOXES", weight, boxes) + 
-                "</td></tr>\n");
-            writer.write("<tr><td class=\"freight-info\">UPS TRACKING#: " + 
-                (tracking != null && !tracking.isEmpty() ? tracking : "") + 
-                "</td></tr>\n");
-            writer.write("</table>\n");
-
-            // P.O# information
-            writer.write("<table>\n");
-            writer.write("<tr><td class=\"header-info\">P.O#: " + po + "</td></tr>\n");
-            writer.write("</table>\n");
-
-            // Data table
-            writer.write("<table class=\"data-table\">\n");
-            writer.write("<tr>\n");
-            writer.write("<th>PO#</th>\n");
-            writer.write("<th>ITEM#</th>\n");
-            writer.write("<th class=\"center\" style=\"width: 20%;\">QTY</th>\n");
-            writer.write("<th class=\"center\" style=\"width: 20%;\">Receive check</th>\n");
-            writer.write("<th>NOTES</th>\n");
-            writer.write("</tr>\n");
+            // Calculate how many entries per table (split evenly between 2 tables per page)
+            int entriesPerTable = Math.max(1, (int) Math.ceil(invoiceEntries.size() / 2.0));
+            int totalPages = (int) Math.ceil(invoiceEntries.size() / (double)(entriesPerTable * 2));
             
-            // Calculate total quantity and write data rows
-            int totalQty = 0;
-            for (InvoiceEntry entry : invoiceEntries) {
-                writer.write("<tr>\n");
-                writer.write("<td>" + entry.getPoNo() + "</td>\n");
-                writer.write("<td>" + entry.getItemNo() + "</td>\n");
-                writer.write("<td class=\"center\">" + entry.getQty() + "</td>\n");
-                writer.write("<td class=\"center\"><input type=\"checkbox\" /></td>\n"); // Checkbox for Receive check column
-                writer.write("<td></td>\n"); // Empty notes field
-                writer.write("</tr>\n");
-                totalQty += entry.getQty();
+            for (int page = 0; page < totalPages; page++) {
+                writer.write("<div class=\"page\">\n");
+                
+                // Header information table (only on first page)
+                if (page == 0) {
+                    writer.write("<table>\n");
+                    writer.write("<tr><td class=\"header-info\">ARRIVAL#: " + arrival + "</td></tr>\n");
+                    writer.write("<tr><td class=\"header-info\">AMNT:</td></tr>\n");
+                    writer.write("<tr><td class=\"header-info\">DATE:</td></tr>\n");
+                    writer.write("</table>\n");
+
+                    // UPS Freight information
+                    writer.write("<table>\n");
+                    writer.write("<tr><td class=\"freight-info\">" + 
+                        String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f", weight, rmb, rate, upsFreight) + 
+                        "</td></tr>\n");
+                    writer.write("<tr><td class=\"freight-info\">" + 
+                        String.format("WEIGHT & BOXES: %.1f KG || %d BOXES", weight, boxes) + 
+                        "</td></tr>\n");
+                    writer.write("<tr><td class=\"freight-info\">UPS TRACKING#: " + 
+                        (tracking != null && !tracking.isEmpty() ? tracking : "") + 
+                        "</td></tr>\n");
+                    writer.write("</table>\n");
+
+                    // P.O# information
+                    writer.write("<table>\n");
+                    writer.write("<tr><td class=\"header-info\">P.O#: " + po + "</td></tr>\n");
+                    writer.write("</table>\n");
+                }
+                
+                // Container for two tables side by side
+                writer.write("<div class=\"table-container\">\n");
+                
+                // Left table
+                int leftTableStart = page * entriesPerTable * 2;
+                int leftTableEnd = Math.min(leftTableStart + entriesPerTable, invoiceEntries.size());
+                
+                if (leftTableStart < invoiceEntries.size()) {
+                    writer.write("<div class=\"table-wrapper\">\n");
+                    writer.write("<table class=\"data-table\">\n");
+                    writer.write("<tr>\n");
+                    writer.write("<th>PO/NO</th>\n");
+                    writer.write("<th>ITEM NO</th>\n");
+                    writer.write("<th class=\"center\">QTY</th>\n");
+                    writer.write("<th class=\"center\">RECEIVE CHECK</th>\n");
+                    writer.write("<th>NOTES</th>\n");
+                    writer.write("</tr>\n");
+                    
+                    int leftTableQty = 0;
+                    for (int i = leftTableStart; i < leftTableEnd; i++) {
+                        InvoiceEntry entry = invoiceEntries.get(i);
+                        writer.write("<tr>\n");
+                        writer.write("<td>" + entry.getPoNo() + "</td>\n");
+                        writer.write("<td>" + entry.getItemNo() + "</td>\n");
+                        writer.write("<td class=\"center\">" + entry.getQty() + "</td>\n");
+                        writer.write("<td class=\"center\">☐</td>\n"); // Checkbox symbol
+                        writer.write("<td></td>\n"); // Empty notes field
+                        writer.write("</tr>\n");
+                        leftTableQty += entry.getQty();
+                    }
+                    
+                    // Total for left table
+                    writer.write("<tr class=\"total-row\">\n");
+                    writer.write("<td colspan=\"2\">TOTAL</td>\n");
+                    writer.write("<td class=\"center\">" + leftTableQty + "</td>\n");
+                    writer.write("<td class=\"center\"></td>\n");
+                    writer.write("<td></td>\n");
+                    writer.write("</tr>\n");
+                    writer.write("</table>\n");
+                    writer.write("</div>\n");
+                }
+                
+                // Right table
+                int rightTableStart = leftTableEnd;
+                int rightTableEnd = Math.min(rightTableStart + entriesPerTable, invoiceEntries.size());
+                
+                if (rightTableStart < invoiceEntries.size()) {
+                    writer.write("<div class=\"table-wrapper\">\n");
+                    writer.write("<table class=\"data-table\">\n");
+                    writer.write("<tr>\n");
+                    writer.write("<th>PO/NO</th>\n");
+                    writer.write("<th>ITEM NO</th>\n");
+                    writer.write("<th class=\"center\">QTY</th>\n");
+                    writer.write("<th class=\"center\">RECEIVE CHECK</th>\n");
+                    writer.write("<th>NOTES</th>\n");
+                    writer.write("</tr>\n");
+                    
+                    int rightTableQty = 0;
+                    for (int i = rightTableStart; i < rightTableEnd; i++) {
+                        InvoiceEntry entry = invoiceEntries.get(i);
+                        writer.write("<tr>\n");
+                        writer.write("<td>" + entry.getPoNo() + "</td>\n");
+                        writer.write("<td>" + entry.getItemNo() + "</td>\n");
+                        writer.write("<td class=\"center\">" + entry.getQty() + "</td>\n");
+                        writer.write("<td class=\"center\">☐</td>\n"); // Checkbox symbol
+                        writer.write("<td></td>\n"); // Empty notes field
+                        writer.write("</tr>\n");
+                        rightTableQty += entry.getQty();
+                    }
+                    
+                    // Total for right table
+                    writer.write("<tr class=\"total-row\">\n");
+                    writer.write("<td colspan=\"2\">TOTAL</td>\n");
+                    writer.write("<td class=\"center\">" + rightTableQty + "</td>\n");
+                    writer.write("<td class=\"center\"></td>\n");
+                    writer.write("<td></td>\n");
+                    writer.write("</tr>\n");
+                    writer.write("</table>\n");
+                    writer.write("</div>\n");
+                }
+                
+                writer.write("</div>\n"); // Close table-container
+                writer.write("</div>\n"); // Close page
             }
-            
-            // Total quantity row
-            writer.write("<tr class=\"total-row\">\n");
-            writer.write("<td></td>\n");
-            writer.write("<td></td>\n");
-            writer.write("<td class=\"center\">TOTAL QTY: " + totalQty + "</td>\n");
-            writer.write("<td class=\"center\"></td>\n");
-            writer.write("<td></td>\n");
-            writer.write("</tr>\n");
-            writer.write("</table>\n");
 
             writer.write("</body>\n</html>\n");
         }

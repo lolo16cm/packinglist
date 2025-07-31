@@ -50,6 +50,13 @@ def custom_compare(a, b):
     # If all compared characters are equal, shorter string comes first
     return len(str_a) - len(str_b)
 
+def custom_compare_reverse(a, b):
+    """
+    Custom comparison function for DESCENDING sorting
+    Returns the opposite of custom_compare to reverse the order
+    """
+    return -custom_compare(a, b)
+
 def test_expected_result():
     """Test with the expected result provided by user"""
     # Expected result from user
@@ -66,13 +73,19 @@ def test_expected_result():
     # Sort using our custom function
     sorted_data = sorted(test_data, key=cmp_to_key(custom_compare))
     
-    print("\nSorted result:")
+    print("\nSorted result (ascending):")
     print(sorted_data)
+    
+    # Sort in reverse order
+    sorted_data_desc = sorted(test_data, key=cmp_to_key(custom_compare_reverse))
+    
+    print("\nSorted result (descending):")
+    print(sorted_data_desc)
     
     print("\nExpected result:")
     print(expected)
     
-    print(f"\nDoes our result match expected? {sorted_data == expected}")
+    print(f"\nDoes our ascending result match expected? {sorted_data == expected}")
     
     return sorted_data == expected
 
@@ -93,7 +106,10 @@ def test_csv_data():
             print(f"\nOriginal ITEM NO. values: {item_nos}")
             
             sorted_items = sorted(item_nos, key=cmp_to_key(custom_compare))
-            print(f"Sorted ITEM NO. values: {sorted_items}")
+            print(f"Sorted ITEM NO. values (ascending): {sorted_items}")
+            
+            sorted_items_desc = sorted(item_nos, key=cmp_to_key(custom_compare_reverse))
+            print(f"Sorted ITEM NO. values (descending): {sorted_items_desc}")
         
         # Test PO/NO. column
         po_nos = list(set(row['PO/NO.'] for row in rows if row['PO/NO.']))
@@ -101,7 +117,10 @@ def test_csv_data():
             print(f"\nOriginal PO/NO. values: {po_nos}")
             
             sorted_pos = sorted(po_nos, key=cmp_to_key(custom_compare))
-            print(f"Sorted PO/NO. values: {sorted_pos}")
+            print(f"Sorted PO/NO. values (ascending): {sorted_pos}")
+            
+            sorted_pos_desc = sorted(po_nos, key=cmp_to_key(custom_compare_reverse))
+            print(f"Sorted PO/NO. values (descending): {sorted_pos_desc}")
             
     except FileNotFoundError:
         print("CSV file not found. Skipping CSV test.")

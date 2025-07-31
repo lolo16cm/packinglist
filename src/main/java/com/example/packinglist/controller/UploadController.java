@@ -155,7 +155,7 @@ public class UploadController {
             }
         }
         
-        // Sort by item number in numerical ascending order
+        // Sort by item number: numerical ascending first, then alphabetical ascending
         result.sort((a, b) -> {
             String itemA = a.getItemNo();
             String itemB = b.getItemNo();
@@ -164,17 +164,25 @@ public class UploadController {
             Integer numA = extractNumericPart(itemA);
             Integer numB = extractNumericPart(itemB);
             
-            // If both have numeric parts, compare numerically
+            // If both have numeric parts, compare numerically first
             if (numA != null && numB != null) {
                 int numComparison = numA.compareTo(numB);
                 if (numComparison != 0) {
-                    return numComparison;
+                    return numComparison; // Different numbers, sort numerically
                 }
-                // If numeric parts are equal, compare the full strings
+                // If numeric parts are equal, sort alphabetically by the full string
                 return itemA.compareTo(itemB);
             }
             
-            // If one or both don't have numeric parts, fall back to string comparison
+            // If only one has a numeric part, prioritize the one with numeric part
+            if (numA != null && numB == null) {
+                return -1; // A has number, B doesn't - A comes first
+            }
+            if (numA == null && numB != null) {
+                return 1; // B has number, A doesn't - B comes first
+            }
+            
+            // If neither has numeric parts, fall back to alphabetical comparison
             return itemA.compareTo(itemB);
         });
         
@@ -503,5 +511,31 @@ public class UploadController {
             System.err.println("Warning: Invalid unit value '" + unitValueString + "'. Using 0.0 as default.");
             return 0.0;
         }
+    }
+
+    /**
+     * Extracts the numeric part from an item number string for proper numerical sorting.
+     * 
+     * @param itemNo The item number string (e.g., "1015", "1016B", "1059EMGM")
+     * @return The numeric part as Integer, or null if no numeric part found
+     */
+    private Integer extractNumericPart(String itemNo) {
+        if (itemNo == null || itemNo.trim().isEmpty()) {
+            return null;
+        }
+        
+        // Use regex to find the first sequence of digits
+        Pattern pattern = Pattern.compile("(\\d+)");
+        Matcher matcher = pattern.matcher(itemNo);
+        
+        if (matcher.find()) {
+            try {
+                return Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        
+        return null;
     }
 }

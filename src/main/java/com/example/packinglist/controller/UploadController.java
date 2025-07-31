@@ -154,6 +154,30 @@ public class UploadController {
                 ));
             }
         }
+        
+        // Sort by item number in numerical ascending order
+        result.sort((a, b) -> {
+            String itemA = a.getItemNo();
+            String itemB = b.getItemNo();
+            
+            // Extract numeric part from item numbers for proper numerical sorting
+            Integer numA = extractNumericPart(itemA);
+            Integer numB = extractNumericPart(itemB);
+            
+            // If both have numeric parts, compare numerically
+            if (numA != null && numB != null) {
+                int numComparison = numA.compareTo(numB);
+                if (numComparison != 0) {
+                    return numComparison;
+                }
+                // If numeric parts are equal, compare the full strings
+                return itemA.compareTo(itemB);
+            }
+            
+            // If one or both don't have numeric parts, fall back to string comparison
+            return itemA.compareTo(itemB);
+        });
+        
         return result;
     }
 

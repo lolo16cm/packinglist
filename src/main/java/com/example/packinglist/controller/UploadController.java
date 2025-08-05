@@ -276,8 +276,21 @@ public class UploadController {
     }
 
     public File generatePackingListHtml(String date, List<InvoiceEntry> invoiceEntries, String tracking, double weight, int boxes, double rmb, double rate) throws IOException {
-        String arrival = "XR" + date;
         String po = "W" + date;
+        // Calculate arrival date as P.O.# + 7 days
+        String arrival;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd");
+            Date poDate = sdf.parse(date);
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(poDate);
+            cal.add(Calendar.DAY_OF_MONTH, 7);
+            String arrivalDate = sdf.format(cal.getTime());
+            arrival = "XR" + arrivalDate;
+        } catch (Exception e) {
+            // Fallback to original calculation if parsing fails
+            arrival = "XR" + date;
+        }
         double upsFreight = weight * rmb / rate;
 
         File file = File.createTempFile("packing-list-" + date, ".html");
@@ -317,8 +330,9 @@ public class UploadController {
             writer.write(".data-table td { border: 1px solid #000; text-align: center; padding: 2px; font-size: 8px; }\n");
             writer.write(".po-col { width: 15%; }\n");
             writer.write(".item-col { width: 25%; }\n");
-            writer.write(".qty-col { width: 15%; }\n");
-            writer.write(".notes-col { width: 45%; }\n");
+            writer.write(".qty-col { width: 10%; }\n");
+            writer.write(".receive-check-col { width: 12%; }\n");
+            writer.write(".notes-col { width: 38%; }\n");
             
             writer.write("</style>\n");
             writer.write("</head>\n<body>\n");
@@ -339,6 +353,10 @@ public class UploadController {
             writer.write("<div class=\"header-row\">\n");
             writer.write("<span class=\"header-label\">DATE:</span>\n");
             writer.write("<span class=\"header-value\"></span>\n");
+            writer.write("</div>\n");
+            writer.write("<div class=\"header-row\">\n");
+            writer.write("<span class=\"header-label\">P.O.#:</span>\n");
+            writer.write("<span class=\"header-value\">" + po + "</span>\n");
             writer.write("</div>\n");
             writer.write("</div>\n");
             
@@ -375,6 +393,7 @@ public class UploadController {
             writer.write("<th class=\"po-col\">PO/NO</th>\n");
             writer.write("<th class=\"item-col\">ITEM NO.</th>\n");
             writer.write("<th class=\"qty-col\">QTY</th>\n");
+            writer.write("<th class=\"receive-check-col\">RECEIVE CHECK</th>\n");
             writer.write("<th class=\"notes-col\">NOTES</th>\n");
             writer.write("</tr>\n");
             
@@ -384,6 +403,7 @@ public class UploadController {
                 writer.write("<td>" + entry.getPoNo() + "</td>\n");
                 writer.write("<td>" + entry.getItemNo() + "</td>\n");
                 writer.write("<td>" + entry.getQty() + "</td>\n");
+                writer.write("<td><input type=\"checkbox\"></td>\n");
                 writer.write("<td></td>\n");
                 writer.write("</tr>\n");
             }
@@ -398,6 +418,7 @@ public class UploadController {
             writer.write("<th class=\"po-col\">PO/NO</th>\n");
             writer.write("<th class=\"item-col\">ITEM NO.</th>\n");
             writer.write("<th class=\"qty-col\">QTY</th>\n");
+            writer.write("<th class=\"receive-check-col\">RECEIVE CHECK</th>\n");
             writer.write("<th class=\"notes-col\">NOTES</th>\n");
             writer.write("</tr>\n");
             
@@ -407,6 +428,7 @@ public class UploadController {
                 writer.write("<td>" + entry.getPoNo() + "</td>\n");
                 writer.write("<td>" + entry.getItemNo() + "</td>\n");
                 writer.write("<td>" + entry.getQty() + "</td>\n");
+                writer.write("<td><input type=\"checkbox\"></td>\n");
                 writer.write("<td></td>\n");
                 writer.write("</tr>\n");
             }

@@ -239,11 +239,16 @@ public class UploadController {
 
         File file = File.createTempFile("packing-list-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            // Get today's date for dynamic formatting
+            String todayMonth = new SimpleDateFormat("MM").format(new Date());
+            String todayDate = new SimpleDateFormat("dd").format(new Date());
+            
             writer.write("ARRIVAL#: " + arrival + "\n");
-            writer.write("AMNT:\n");
             writer.write("DATE:\n");
+            writer.write("P.O.#W25" + todayMonth + todayDate + "=>AMNT:\n");
+            writer.write("P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:\n");
             writer.write("\n"); // Empty row between DATE: and UPS FREIGHT:
-            writer.write(String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f\n", weight, rmb, rate, upsFreight));
+            writer.write(String.format("UPS FREIGHT: %.0f RMB / %.2f RATE = $%.2f\n", rmb, rate, upsFreight));
             // Combine weight and boxes info in one cell with new format
             writer.write(String.format("WEIGHT & BOXES: %.1f KG || %d BOXES\n", weight, boxes));
             if (tracking != null && !tracking.isEmpty()) {
@@ -340,8 +345,10 @@ public class UploadController {
             writer.write(".tables-container { display: flex; gap: 10px; }\n");
             writer.write(".table-column { flex: 1; }\n");
             writer.write(".data-table { width: 100%; border: 2px solid #000; }\n");
-            writer.write(".data-table th { border: 1px solid #000; background-color: #f0f0f0; font-weight: bold; text-align: center; padding: 3px; font-size: 9px; }\n");
+            writer.write(".data-table th { border: 1px solid #000; background-color: #f0f0f0; font-weight: bold; text-align: center; padding: 3px; font-size: 10px; }\n");
+            writer.write(".data-table th.item-header, .data-table th.qty-header { font-size: 16px; }\n");
             writer.write(".data-table td { border: 1px solid #000; text-align: center; padding: 2px; font-size: 8px; }\n");
+            writer.write(".duplicate-item { border: 3px solid red; border-radius: 50%; }\n");
             writer.write(".po-col { width: 15%; }\n");
             writer.write(".item-col { width: 25%; }\n");
             writer.write(".qty-col { width: 10%; }\n");
@@ -355,6 +362,12 @@ public class UploadController {
             int totalEntries = invoiceEntries.size();
             int totalPages = (int) Math.ceil((double) totalEntries / itemsPerPage);
             
+            // Calculate total quantity
+            int totalQty = 0;
+            for (InvoiceEntry entry : invoiceEntries) {
+                totalQty += entry.getQty();
+            }
+            
             // Generate each page
             for (int pageNum = 0; pageNum < totalPages; pageNum++) {
                 // Add page break for all pages except the first
@@ -366,7 +379,8 @@ public class UploadController {
                 writePageHeader(writer, arrival, po, upsFreight, rmb, rate, weight, boxes, tracking, pageNum + 1, totalPages);
                 
                 // Data tables section for this page
-                writePageData(writer, invoiceEntries, pageNum, itemsPerPage);
+                boolean isLastPage = (pageNum == totalPages - 1);
+                writePageData(writer, invoiceEntries, pageNum, itemsPerPage, isLastPage, totalQty);
             }
 
             writer.write("</body>\n</html>\n");
@@ -388,24 +402,28 @@ public class UploadController {
         writer.write("<span class=\"header-label\">ARRIVAL#:</span>\n");
         writer.write("<span class=\"header-value\">" + arrival + "</span>\n");
         writer.write("</div>\n");
-        writer.write("<div class=\"header-row\">\n");
-        writer.write("<span class=\"header-label\">AMNT:</span>\n");
-        writer.write("<span class=\"header-value\"></span>\n");
-        writer.write("</div>\n");
+        // Get today's date for dynamic formatting
+        String todayMonth = new SimpleDateFormat("MM").format(new Date());
+        String todayDate = new SimpleDateFormat("dd").format(new Date());
+        
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-label\">DATE:</span>\n");
         writer.write("<span class=\"header-value\"></span>\n");
         writer.write("</div>\n");
         writer.write("<div class=\"header-row\">\n");
-        writer.write("<span class=\"header-label\">P.O.#:</span>\n");
-        writer.write("<span class=\"header-value\">" + po + "</span>\n");
+        writer.write("<span class=\"header-label\">P.O.#W25" + todayMonth + todayDate + "=>AMNT:</span>\n");
+        writer.write("<span class=\"header-value\"></span>\n");
+        writer.write("</div>\n");
+        writer.write("<div class=\"header-row\">\n");
+        writer.write("<span class=\"header-label\">P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:</span>\n");
+        writer.write("<span class=\"header-value\"></span>\n");
         writer.write("</div>\n");
         writer.write("</div>\n");
         
         // Right header box
         writer.write("<div class=\"header-right\">\n");
         writer.write("<div style=\"text-align: center; font-weight: bold; margin-bottom: 5px; font-size: 11px;\">UPS FREIGHT:</div>\n");
-        writer.write("<div style=\"text-align: center; margin-bottom: 5px; font-size: 9px;\">" + String.format("%.1f / %.2f RATE = $%.2f", rmb, rate, upsFreight) + "</div>\n");
+        writer.write("<div style=\"text-align: center; margin-bottom: 5px; font-size: 16px;\">" + String.format("%.0f RMB / %.2f RATE = $%.2f", rmb, rate, upsFreight) + "</div>\n");
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span style=\"width: 80px; font-size: 9px;\">GROSS WEIGHT:</span>\n");
         writer.write("<span class=\"header-value\">" + String.format("%.1f", weight) + "</span>\n");
@@ -431,13 +449,16 @@ public class UploadController {
     /**
      * Writes the data table section for a single page with left and right columns
      */
-    private void writePageData(BufferedWriter writer, List<InvoiceEntry> invoiceEntries, int pageNum, int itemsPerPage) throws IOException {
+    private void writePageData(BufferedWriter writer, List<InvoiceEntry> invoiceEntries, int pageNum, int itemsPerPage, boolean isLastPage, int totalQty) throws IOException {
         writer.write("<div class=\"tables-container\">\n");
         
         // Calculate the range of items for this page
         int startIndex = pageNum * itemsPerPage;
         int endIndex = Math.min(startIndex + itemsPerPage, invoiceEntries.size());
         int itemsOnThisPage = endIndex - startIndex;
+        
+        // Find duplicate item numbers on this page
+        Set<String> duplicateItems = findDuplicateItemNumbers(invoiceEntries, startIndex, endIndex);
         
         // Calculate entries per column for this page (split evenly)
         int entriesPerColumn = (int) Math.ceil(itemsOnThisPage / 2.0);
@@ -448,7 +469,7 @@ public class UploadController {
         
         for (int i = 0; i < entriesPerColumn && (startIndex + i) < endIndex; i++) {
             InvoiceEntry entry = invoiceEntries.get(startIndex + i);
-            writeTableRow(writer, entry);
+            writeTableRow(writer, entry, duplicateItems.contains(entry.getItemNo()));
         }
         
         writer.write("</table>\n");
@@ -460,7 +481,18 @@ public class UploadController {
         
         for (int i = entriesPerColumn; i < itemsOnThisPage && (startIndex + i) < endIndex; i++) {
             InvoiceEntry entry = invoiceEntries.get(startIndex + i);
-            writeTableRow(writer, entry);
+            writeTableRow(writer, entry, duplicateItems.contains(entry.getItemNo()));
+        }
+        
+        // Add total quantity row at the end of the last page
+        if (isLastPage) {
+            writer.write("<tr style=\"border-top: 3px solid #000; font-weight: bold;\">\n");
+            writer.write("<td></td>\n");
+            writer.write("<td>TOTAL QTY:</td>\n");
+            writer.write("<td style=\"font-size: 16px;\">" + totalQty + "</td>\n");
+            writer.write("<td></td>\n");
+            writer.write("<td></td>\n");
+            writer.write("</tr>\n");
         }
         
         writer.write("</table>\n");
@@ -475,8 +507,8 @@ public class UploadController {
         writer.write("<table class=\"data-table\">\n");
         writer.write("<tr>\n");
         writer.write("<th class=\"po-col\">PO/NO</th>\n");
-        writer.write("<th class=\"item-col\">ITEM NO.</th>\n");
-        writer.write("<th class=\"qty-col\">QTY</th>\n");
+        writer.write("<th class=\"item-col item-header\">ITEM NO.</th>\n");
+        writer.write("<th class=\"qty-col qty-header\">QTY</th>\n");
         writer.write("<th class=\"receive-check-col\">RECEIVE CHECK</th>\n");
         writer.write("<th class=\"notes-col\">NOTES</th>\n");
         writer.write("</tr>\n");
@@ -485,14 +517,38 @@ public class UploadController {
     /**
      * Writes a single table row
      */
-    private void writeTableRow(BufferedWriter writer, InvoiceEntry entry) throws IOException {
+    private void writeTableRow(BufferedWriter writer, InvoiceEntry entry, boolean isDuplicate) throws IOException {
         writer.write("<tr>\n");
         writer.write("<td>" + entry.getPoNo() + "</td>\n");
-        writer.write("<td>" + entry.getItemNo() + "</td>\n");
+        String itemClass = isDuplicate ? " class=\"duplicate-item\"" : "";
+        writer.write("<td" + itemClass + ">" + entry.getItemNo() + "</td>\n");
         writer.write("<td>" + entry.getQty() + "</td>\n");
         writer.write("<td><input type=\"checkbox\"></td>\n");
         writer.write("<td></td>\n");
         writer.write("</tr>\n");
+    }
+
+    /**
+     * Finds duplicate item numbers within a given range
+     */
+    private Set<String> findDuplicateItemNumbers(List<InvoiceEntry> invoiceEntries, int startIndex, int endIndex) {
+        Map<String, Integer> itemCounts = new HashMap<>();
+        Set<String> duplicates = new HashSet<>();
+        
+        // Count occurrences of each item number in the range
+        for (int i = startIndex; i < endIndex; i++) {
+            String itemNo = invoiceEntries.get(i).getItemNo();
+            itemCounts.put(itemNo, itemCounts.getOrDefault(itemNo, 0) + 1);
+        }
+        
+        // Find items that appear more than once
+        for (Map.Entry<String, Integer> entry : itemCounts.entrySet()) {
+            if (entry.getValue() > 1) {
+                duplicates.add(entry.getKey());
+            }
+        }
+        
+        return duplicates;
     }
 
     public File generateMsdosCsv(String date, List<InvoiceEntry> invoiceEntries) throws IOException {

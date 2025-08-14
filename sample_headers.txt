@@ -1,0 +1,6 @@
+HTTP/1.1 400 
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 30
+Date: Thu, 14 Aug 2025 22:18:04 GMT
+Connection: close
+

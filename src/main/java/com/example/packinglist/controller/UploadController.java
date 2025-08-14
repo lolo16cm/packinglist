@@ -239,10 +239,14 @@ public class UploadController {
 
         File file = File.createTempFile("packing-list-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            // Get today's date for dynamic formatting
+            String todayMonth = new SimpleDateFormat("MM").format(new Date());
+            String todayDate = new SimpleDateFormat("dd").format(new Date());
+            
             writer.write("ARRIVAL#: " + arrival + "\n");
             writer.write("DATE:\n");
-            writer.write("P.O.#W250101=>AMNT:\n");
-            writer.write("P.O.#WONA250101,8%DISC$321.07=>AMNT: " + po + "\n");
+            writer.write("P.O.#W25" + todayMonth + todayDate + "=>AMNT:\n");
+            writer.write("P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:\n");
             writer.write("\n"); // Empty row between DATE: and UPS FREIGHT:
             writer.write(String.format("UPS FREIGHT: %.0f RMB / %.2f RATE = $%.2f\n", rmb, rate, upsFreight));
             // Combine weight and boxes info in one cell with new format
@@ -398,17 +402,21 @@ public class UploadController {
         writer.write("<span class=\"header-label\">ARRIVAL#:</span>\n");
         writer.write("<span class=\"header-value\">" + arrival + "</span>\n");
         writer.write("</div>\n");
+        // Get today's date for dynamic formatting
+        String todayMonth = new SimpleDateFormat("MM").format(new Date());
+        String todayDate = new SimpleDateFormat("dd").format(new Date());
+        
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-label\">DATE:</span>\n");
         writer.write("<span class=\"header-value\"></span>\n");
         writer.write("</div>\n");
         writer.write("<div class=\"header-row\">\n");
-        writer.write("<span class=\"header-label\">P.O.#W250101=>AMNT:</span>\n");
+        writer.write("<span class=\"header-label\">P.O.#W25" + todayMonth + todayDate + "=>AMNT:</span>\n");
         writer.write("<span class=\"header-value\"></span>\n");
         writer.write("</div>\n");
         writer.write("<div class=\"header-row\">\n");
-        writer.write("<span class=\"header-label\">P.O.#WONA250101,8%DISC$321.07=>AMNT:</span>\n");
-        writer.write("<span class=\"header-value\">" + po + "</span>\n");
+        writer.write("<span class=\"header-label\">P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:</span>\n");
+        writer.write("<span class=\"header-value\"></span>\n");
         writer.write("</div>\n");
         writer.write("</div>\n");
         

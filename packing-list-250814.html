@@ -24,8 +24,8 @@ td, th { padding: 2px 4px; vertical-align: top; }
 .table-column { flex: 1; }
 .data-table { width: 100%; border: 2px solid #000; }
 .data-table th { border: 1px solid #000; background-color: #f0f0f0; font-weight: bold; text-align: center; padding: 3px; font-size: 10px; }
+.data-table th.item-header, .data-table th.qty-header { font-size: 16px; }
 .data-table td { border: 1px solid #000; text-align: center; padding: 2px; font-size: 8px; }
-.data-table td.item-data, .data-table td.qty-data { font-size: 16px; }
 .duplicate-item { border: 3px solid red; border-radius: 50%; }
 .po-col { width: 15%; }
 .item-col { width: 25%; }
@@ -47,20 +47,16 @@ td, th { padding: 2px 4px; vertical-align: top; }
 </div>
 <div class="header-row">
 <span class="header-label">P.O.#W250814=>AMNT:</span>
-</div>
-<div class="header-row">
 <span class="header-value"></span>
 </div>
 <div class="header-row">
 <span class="header-label">P.O.#WONA250814,8%DISC$321.07=>AMNT:</span>
-</div>
-<div class="header-row">
 <span class="header-value"></span>
 </div>
 </div>
 <div class="header-right">
 <div style="text-align: center; font-weight: bold; margin-bottom: 5px; font-size: 11px;">UPS FREIGHT:</div>
-<div style="text-align: center; margin-bottom: 5px; font-size: 16px;">7200 RMB / 7.25 RATE = $993.1</div>
+<div style="text-align: center; margin-bottom: 5px; font-size: 16px;">7200 RMB / 7.25 RATE = $12413.79</div>
 <div class="header-row">
 <span style="width: 80px; font-size: 9px;">GROSS WEIGHT:</span>
 <span class="header-value">12.5</span>
@@ -80,43 +76,43 @@ td, th { padding: 2px 4px; vertical-align: top; }
 <table class="data-table">
 <tr>
 <th class="po-col">PO/NO</th>
-<th class="item-col">ITEM NO.</th>
-<th class="qty-col">QTY</th>
+<th class="item-col item-header">ITEM NO.</th>
+<th class="qty-col qty-header">QTY</th>
 <th class="receive-check-col">RECEIVE CHECK</th>
 <th class="notes-col">NOTES</th>
 </tr>
 <tr>
 <td>W240613</td>
-<td class="duplicate-item item-data">1015</td>
-<td class="qty-data">24</td>
+<td class="duplicate-item">1015</td>
+<td>24</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>
 <tr>
 <td>W250626</td>
-<td class="duplicate-item item-data">1015</td>
-<td class="qty-data">12</td>
+<td class="duplicate-item">1015</td>
+<td>12</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>
 <tr>
 <td>W250606</td>
-<td class="duplicate-item item-data">1015</td>
-<td class="qty-data">6</td>
+<td class="duplicate-item">1015</td>
+<td>6</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>
 <tr>
 <td>W240613</td>
-<td class="duplicate-item item-data">1016B</td>
-<td class="qty-data">36</td>
+<td class="duplicate-item">1016B</td>
+<td>36</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>
 <tr>
 <td>W250633</td>
-<td class="duplicate-item item-data">1016B</td>
-<td class="qty-data">18</td>
+<td class="duplicate-item">1016B</td>
+<td>18</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>
@@ -126,43 +122,43 @@ td, th { padding: 2px 4px; vertical-align: top; }
 <table class="data-table">
 <tr>
 <th class="po-col">PO/NO</th>
-<th class="item-col">ITEM NO.</th>
-<th class="qty-col">QTY</th>
+<th class="item-col item-header">ITEM NO.</th>
+<th class="qty-col qty-header">QTY</th>
 <th class="receive-check-col">RECEIVE CHECK</th>
 <th class="notes-col">NOTES</th>
 </tr>
 <tr>
 <td>W250631</td>
-<td class="item-data">1022</td>
-<td class="qty-data">60</td>
+<td>1022</td>
+<td>60</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>
 <tr>
 <td>W250631</td>
-<td class="item-data">1037B</td>
-<td class="qty-data">120</td>
+<td>1037B</td>
+<td>120</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>
 <tr>
 <td>W250633</td>
-<td class="item-data">1069B</td>
-<td class="qty-data">144</td>
+<td>1069B</td>
+<td>144</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>
 <tr>
 <td>W250634</td>
-<td class="item-data">1081G</td>
-<td class="qty-data">72</td>
+<td>1081G</td>
+<td>72</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>
 <tr>
 <td>W250631</td>
-<td class="item-data">1098B</td>
-<td class="qty-data">36</td>
+<td>1098B</td>
+<td>36</td>
 <td><input type="checkbox"></td>
 <td></td>
 </tr>

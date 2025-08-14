@@ -277,15 +277,16 @@ public class UploadController {
 
     public File generatePackingListHtml(String date, List<InvoiceEntry> invoiceEntries, String tracking, double weight, int boxes, double rmb, double rate) throws IOException {
         // Configure items per page (can be made configurable via parameter)
-        int itemsPerPage = 20; // 10 items per column × 2 columns per page
+        int itemsPerPage = 64; // 32 items per column × 2 columns per page
         return generatePackingListHtmlWithPagination(date, invoiceEntries, tracking, weight, boxes, rmb, rate, itemsPerPage);
     }
 
     /**
      * Generates a multi-page HTML packing list with configurable pagination.
      * Each page contains two columns: left column has first N items, right column has next N items.
+     * Header information (arrival, amount, date, PO#, UPS freight) appears once at the top.
      * 
-     * @param itemsPerPage Total items per page (will be split evenly between left and right columns)
+     * @param itemsPerPage Total items per page (will be split evenly between left and right columns, default 64 for 32 rows each)
      */
     public File generatePackingListHtmlWithPagination(String date, List<InvoiceEntry> invoiceEntries, String tracking, double weight, int boxes, double rmb, double rate, int itemsPerPage) throws IOException {
         String po = "W" + date;

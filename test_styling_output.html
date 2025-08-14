@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Packing List - 250814</title>
+<title>Test Case - Packing List Styling</title>
 <style>
 @media print {
   @page { size: A4 portrait; margin: 0.4in 0.3in; }
@@ -38,34 +38,54 @@ td, th { padding: 2px 4px; vertical-align: top; }
 .qty-col { width: 10%; }
 .receive-check-col { width: 12%; }
 .notes-col { width: 38%; }
+.test-info { 
+  background-color: #e7f3ff; 
+  border: 2px solid #0066cc; 
+  padding: 10px; 
+  margin-bottom: 15px; 
+  border-radius: 5px; 
+}
 </style>
 </head>
 <body>
+
+<div class="test-info">
+  <h2 style="margin: 0 0 10px 0; color: #0066cc;">Test Case - Styling Demonstration</h2>
+  <p style="margin: 5px 0; font-size: 12px;"><strong>Features tested:</strong></p>
+  <ul style="margin: 5px 0; padding-left: 20px; font-size: 11px;">
+    <li>Standardized header font sizes (10px)</li>
+    <li>16px font size for ITEM NO. and QTY data</li>
+    <li>16px font size for RMB / RATE calculation</li>
+    <li>Enhanced duplicate item highlighting (red circle, background, glow, bold)</li>
+    <li>Consistent styling across all elements</li>
+  </ul>
+</div>
+
 <div class="header-container">
 <div class="header-left">
 <div class="header-row">
 <span class="header-label">ARRIVAL#:</span>
-<span class="header-value">XR250821</span>
+<span class="header-value">XR250814</span>
 </div>
 <div class="header-row">
 <span class="header-label">DATE:</span>
-<span class="header-value"></span>
+<span class="header-value">2024-08-14</span>
 </div>
 <div class="header-row">
 <span class="header-label">P.O.#W250814=>AMNT:</span>
-<span class="header-value"></span>
+<span class="header-value">$1524.90</span>
 </div>
 <div class="header-row">
 <span class="header-label">P.O.#WONA250814,8%DISC$321.07=>AMNT:</span>
-<span class="header-value"></span>
+<span class="header-value">$295.38</span>
 </div>
 </div>
 <div class="header-right">
 <div style="text-align: center; font-weight: bold; margin-bottom: 5px; font-size: 10px;">UPS FREIGHT:</div>
-<div style="text-align: center; margin-bottom: 5px; font-size: 16px;">7200 RMB / 7.25 RATE = $12413.79</div>
+<div style="text-align: center; margin-bottom: 5px; font-size: 16px;">7200 RMB / 7.25 RATE = $993.10</div>
 <div class="header-row">
 <span style="width: 80px; font-size: 10px;">GROSS WEIGHT:</span>
-<span class="header-value">12.5</span>
+<span class="header-value">12.5 KG</span>
 </div>
 <div class="header-row">
 <span style="width: 80px; font-size: 10px;">BOXES:</span>
@@ -77,6 +97,7 @@ td, th { padding: 2px 4px; vertical-align: top; }
 </div>
 </div>
 </div>
+
 <div class="tables-container">
 <div class="table-column">
 <table class="data-table">
@@ -92,35 +113,35 @@ td, th { padding: 2px 4px; vertical-align: top; }
 <td class="duplicate-item item-data">1015</td>
 <td class="qty-data">24</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Duplicate Item</td>
 </tr>
 <tr>
 <td>W250626</td>
 <td class="duplicate-item item-data">1015</td>
 <td class="qty-data">12</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Duplicate Item</td>
 </tr>
 <tr>
 <td>W250606</td>
 <td class="duplicate-item item-data">1015</td>
 <td class="qty-data">6</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Duplicate Item</td>
 </tr>
 <tr>
 <td>W240613</td>
 <td class="duplicate-item item-data">1016B</td>
 <td class="qty-data">36</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Duplicate Item</td>
 </tr>
 <tr>
 <td>W250633</td>
 <td class="duplicate-item item-data">1016B</td>
 <td class="qty-data">18</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Duplicate Item</td>
 </tr>
 </table>
 </div>
@@ -138,35 +159,35 @@ td, th { padding: 2px 4px; vertical-align: top; }
 <td class="item-data">1022</td>
 <td class="qty-data">60</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Unique Item</td>
 </tr>
 <tr>
 <td>W250631</td>
 <td class="item-data">1037B</td>
 <td class="qty-data">120</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Unique Item</td>
 </tr>
 <tr>
 <td>W250633</td>
 <td class="item-data">1069B</td>
 <td class="qty-data">144</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Unique Item</td>
 </tr>
 <tr>
 <td>W250634</td>
 <td class="item-data">1081G</td>
 <td class="qty-data">72</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Unique Item</td>
 </tr>
 <tr>
 <td>W250631</td>
 <td class="item-data">1098B</td>
 <td class="qty-data">36</td>
 <td><input type="checkbox"></td>
-<td></td>
+<td>Unique Item</td>
 </tr>
 <tr style="border-top: 3px solid #000; font-weight: bold;">
 <td></td>
@@ -178,5 +199,18 @@ td, th { padding: 2px 4px; vertical-align: top; }
 </table>
 </div>
 </div>
+
+<div style="margin-top: 20px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 5px;">
+  <h3 style="color: #333; margin: 0 0 10px 0;">Visual Test Results:</h3>
+  <ul style="font-size: 11px; margin: 0; padding-left: 20px;">
+    <li><strong>Headers:</strong> All table headers display at standard 10px font size</li>
+    <li><strong>Item Numbers:</strong> All item data displays at 16px font size (bold for duplicates)</li>
+    <li><strong>Quantities:</strong> All quantity data displays at 16px font size</li>
+    <li><strong>RMB Rate:</strong> Currency conversion displays at 16px font size</li>
+    <li><strong>Duplicate Highlighting:</strong> Items 1015 and 1016B show red circles, background, and glow</li>
+    <li><strong>Unique Items:</strong> Items 1022, 1037B, 1069B, 1081G, 1098B display normally</li>
+  </ul>
+</div>
+
 </body>
 </html>

@@ -246,9 +246,11 @@ public class UploadController {
             writer.write("ARRIVAL#: " + arrival + "\n");
             writer.write("DATE:\n");
             writer.write("P.O.#W25" + todayMonth + todayDate + "=>AMNT:\n");
+            writer.write("\n"); // New line for P.O.#W250814 value
             writer.write("P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:\n");
+            writer.write("\n"); // New line for P.O.#WONA250814 value
             writer.write("\n"); // Empty row between DATE: and UPS FREIGHT:
-            writer.write(String.format("UPS FREIGHT: %.0f RMB / %.2f RATE = $%.2f\n", rmb, rate, upsFreight));
+            writer.write(String.format("UPS FREIGHT: RMB / RATE = $%.2f\n", upsFreight));
             // Combine weight and boxes info in one cell with new format
             writer.write(String.format("WEIGHT & BOXES: %.1f KG || %d BOXES\n", weight, boxes));
             if (tracking != null && !tracking.isEmpty()) {
@@ -412,10 +414,14 @@ public class UploadController {
         writer.write("</div>\n");
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-label\">P.O.#W25" + todayMonth + todayDate + "=>AMNT:</span>\n");
+        writer.write("</div>\n");
+        writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-value\"></span>\n");
         writer.write("</div>\n");
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-label\">P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:</span>\n");
+        writer.write("</div>\n");
+        writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-value\"></span>\n");
         writer.write("</div>\n");
         writer.write("</div>\n");
@@ -423,7 +429,7 @@ public class UploadController {
         // Right header box
         writer.write("<div class=\"header-right\">\n");
         writer.write("<div style=\"text-align: center; font-weight: bold; margin-bottom: 5px; font-size: 11px;\">UPS FREIGHT:</div>\n");
-        writer.write("<div style=\"text-align: center; margin-bottom: 5px; font-size: 16px;\">" + String.format("%.0f RMB / %.2f RATE = $%.2f", rmb, rate, upsFreight) + "</div>\n");
+        writer.write("<div style=\"text-align: center; margin-bottom: 5px; font-size: 16px;\">" + String.format("RMB / RATE = $%.2f", upsFreight) + "</div>\n");
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span style=\"width: 80px; font-size: 9px;\">GROSS WEIGHT:</span>\n");
         writer.write("<span class=\"header-value\">" + String.format("%.1f", weight) + "</span>\n");
@@ -610,7 +616,7 @@ public class UploadController {
             writer.write("ARRIVAL#: " + arrival + "\n");
             writer.write("AMNT:\n");
             writer.write("DATE:\n");
-            writer.write(String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f\n", weight, rmb, rate, upsFreight));
+            writer.write(String.format("UPS FREIGHT: RMB / RATE = $%.2f\n", upsFreight));
             writer.write(String.format("GROSS WEIGHT: %.1f KG, %d BOXES\n", weight, boxes));
             if (tracking != null && !tracking.isEmpty()) {
                 writer.write("UPS TRACKING#: " + tracking + "\n\n");

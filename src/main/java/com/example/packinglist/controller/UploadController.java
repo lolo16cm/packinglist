@@ -276,6 +276,18 @@ public class UploadController {
     }
 
     public File generatePackingListHtml(String date, List<InvoiceEntry> invoiceEntries, String tracking, double weight, int boxes, double rmb, double rate) throws IOException {
+        // Configure items per page (can be made configurable via parameter)
+        int itemsPerPage = 20; // 10 items per column × 2 columns per page
+        return generatePackingListHtmlWithPagination(date, invoiceEntries, tracking, weight, boxes, rmb, rate, itemsPerPage);
+    }
+
+    /**
+     * Generates a multi-page HTML packing list with configurable pagination.
+     * Each page contains two columns: left column has first N items, right column has next N items.
+     * 
+     * @param itemsPerPage Total items per page (will be split evenly between left and right columns)
+     */
+    public File generatePackingListHtmlWithPagination(String date, List<InvoiceEntry> invoiceEntries, String tracking, double weight, int boxes, double rmb, double rate, int itemsPerPage) throws IOException {
         String po = "W" + date;
         // Calculate arrival date as P.O.# + 7 days
         String arrival;
@@ -306,6 +318,7 @@ public class UploadController {
             writer.write("  @page { size: A4 portrait; margin: 0.4in 0.3in; }\n");
             writer.write("  body { margin: 0; padding: 0; }\n");
             writer.write("  .no-print { display: none; }\n");
+            writer.write("  .page-break { page-break-before: always; }\n");
             writer.write("}\n");
             
             // General styles
@@ -337,109 +350,148 @@ public class UploadController {
             writer.write("</style>\n");
             writer.write("</head>\n<body>\n");
 
-            // Header section
-            writer.write("<div class=\"header-container\">\n");
-            
-            // Left header box
-            writer.write("<div class=\"header-left\">\n");
-            writer.write("<div class=\"header-row\">\n");
-            writer.write("<span class=\"header-label\">ARRIVAL#:</span>\n");
-            writer.write("<span class=\"header-value\">" + arrival + "</span>\n");
-            writer.write("</div>\n");
-            writer.write("<div class=\"header-row\">\n");
-            writer.write("<span class=\"header-label\">AMNT:</span>\n");
-            writer.write("<span class=\"header-value\"></span>\n");
-            writer.write("</div>\n");
-            writer.write("<div class=\"header-row\">\n");
-            writer.write("<span class=\"header-label\">DATE:</span>\n");
-            writer.write("<span class=\"header-value\"></span>\n");
-            writer.write("</div>\n");
-            writer.write("<div class=\"header-row\">\n");
-            writer.write("<span class=\"header-label\">P.O.#:</span>\n");
-            writer.write("<span class=\"header-value\">" + po + "</span>\n");
-            writer.write("</div>\n");
-            writer.write("</div>\n");
-            
-            // Right header box
-            writer.write("<div class=\"header-right\">\n");
-            writer.write("<div style=\"text-align: center; font-weight: bold; margin-bottom: 5px; font-size: 11px;\">UPS FREIGHT:</div>\n");
-            writer.write("<div style=\"text-align: center; margin-bottom: 5px; font-size: 9px;\">" + String.format("%.1f / %.2f RATE = $%.2f", rmb, rate, upsFreight) + "</div>\n");
-            writer.write("<div class=\"header-row\">\n");
-            writer.write("<span style=\"width: 80px; font-size: 9px;\">GROSS WEIGHT:</span>\n");
-            writer.write("<span class=\"header-value\">" + String.format("%.1f", weight) + "</span>\n");
-            writer.write("</div>\n");
-            writer.write("<div class=\"header-row\">\n");
-            writer.write("<span style=\"width: 80px; font-size: 9px;\">BOXES:</span>\n");
-            writer.write("<span class=\"header-value\">" + boxes + "</span>\n");
-            writer.write("</div>\n");
-            writer.write("<div class=\"header-row\">\n");
-            writer.write("<span style=\"width: 80px; font-size: 9px;\">UPS TRACKING#:</span>\n");
-            writer.write("<span class=\"header-value\">" + (tracking != null ? tracking : "") + "</span>\n");
-            writer.write("</div>\n");
-            writer.write("</div>\n");
-            writer.write("</div>\n");
-
-            // Data tables section
-            writer.write("<div class=\"tables-container\">\n");
-            
-            // Calculate entries per column (split evenly)
+            // Calculate pagination
             int totalEntries = invoiceEntries.size();
-            int entriesPerColumn = (int) Math.ceil(totalEntries / 2.0);
+            int totalPages = (int) Math.ceil((double) totalEntries / itemsPerPage);
             
-            // Left column
-            writer.write("<div class=\"table-column\">\n");
-            writer.write("<table class=\"data-table\">\n");
-            writer.write("<tr>\n");
-            writer.write("<th class=\"po-col\">PO/NO</th>\n");
-            writer.write("<th class=\"item-col\">ITEM NO.</th>\n");
-            writer.write("<th class=\"qty-col\">QTY</th>\n");
-            writer.write("<th class=\"receive-check-col\">RECEIVE CHECK</th>\n");
-            writer.write("<th class=\"notes-col\">NOTES</th>\n");
-            writer.write("</tr>\n");
-            
-            for (int i = 0; i < entriesPerColumn && i < totalEntries; i++) {
-                InvoiceEntry entry = invoiceEntries.get(i);
-                writer.write("<tr>\n");
-                writer.write("<td>" + entry.getPoNo() + "</td>\n");
-                writer.write("<td>" + entry.getItemNo() + "</td>\n");
-                writer.write("<td>" + entry.getQty() + "</td>\n");
-                writer.write("<td><input type=\"checkbox\"></td>\n");
-                writer.write("<td></td>\n");
-                writer.write("</tr>\n");
+            // Generate each page
+            for (int pageNum = 0; pageNum < totalPages; pageNum++) {
+                // Add page break for all pages except the first
+                if (pageNum > 0) {
+                    writer.write("<div class=\"page-break\"></div>\n");
+                }
+                
+                // Header section for each page
+                writePageHeader(writer, arrival, po, upsFreight, rmb, rate, weight, boxes, tracking, pageNum + 1, totalPages);
+                
+                // Data tables section for this page
+                writePageData(writer, invoiceEntries, pageNum, itemsPerPage);
             }
-            
-            writer.write("</table>\n");
-            writer.write("</div>\n");
-            
-            // Right column
-            writer.write("<div class=\"table-column\">\n");
-            writer.write("<table class=\"data-table\">\n");
-            writer.write("<tr>\n");
-            writer.write("<th class=\"po-col\">PO/NO</th>\n");
-            writer.write("<th class=\"item-col\">ITEM NO.</th>\n");
-            writer.write("<th class=\"qty-col\">QTY</th>\n");
-            writer.write("<th class=\"receive-check-col\">RECEIVE CHECK</th>\n");
-            writer.write("<th class=\"notes-col\">NOTES</th>\n");
-            writer.write("</tr>\n");
-            
-            for (int i = entriesPerColumn; i < totalEntries; i++) {
-                InvoiceEntry entry = invoiceEntries.get(i);
-                writer.write("<tr>\n");
-                writer.write("<td>" + entry.getPoNo() + "</td>\n");
-                writer.write("<td>" + entry.getItemNo() + "</td>\n");
-                writer.write("<td>" + entry.getQty() + "</td>\n");
-                writer.write("<td><input type=\"checkbox\"></td>\n");
-                writer.write("<td></td>\n");
-                writer.write("</tr>\n");
-            }
-            
-            writer.write("</table>\n");
-            writer.write("</div>\n");
-            writer.write("</div>\n");
 
             writer.write("</body>\n</html>\n");
         }
         return file;
+    }
+
+    /**
+     * Writes the header section for a single page
+     */
+    private void writePageHeader(BufferedWriter writer, String arrival, String po, double upsFreight, 
+                                double rmb, double rate, double weight, int boxes, String tracking, 
+                                int currentPage, int totalPages) throws IOException {
+        writer.write("<div class=\"header-container\">\n");
+        
+        // Left header box
+        writer.write("<div class=\"header-left\">\n");
+        writer.write("<div class=\"header-row\">\n");
+        writer.write("<span class=\"header-label\">ARRIVAL#:</span>\n");
+        writer.write("<span class=\"header-value\">" + arrival + "</span>\n");
+        writer.write("</div>\n");
+        writer.write("<div class=\"header-row\">\n");
+        writer.write("<span class=\"header-label\">AMNT:</span>\n");
+        writer.write("<span class=\"header-value\"></span>\n");
+        writer.write("</div>\n");
+        writer.write("<div class=\"header-row\">\n");
+        writer.write("<span class=\"header-label\">DATE:</span>\n");
+        writer.write("<span class=\"header-value\"></span>\n");
+        writer.write("</div>\n");
+        writer.write("<div class=\"header-row\">\n");
+        writer.write("<span class=\"header-label\">P.O.#:</span>\n");
+        writer.write("<span class=\"header-value\">" + po + "</span>\n");
+        writer.write("</div>\n");
+        writer.write("</div>\n");
+        
+        // Right header box
+        writer.write("<div class=\"header-right\">\n");
+        writer.write("<div style=\"text-align: center; font-weight: bold; margin-bottom: 5px; font-size: 11px;\">UPS FREIGHT:</div>\n");
+        writer.write("<div style=\"text-align: center; margin-bottom: 5px; font-size: 9px;\">" + String.format("%.1f / %.2f RATE = $%.2f", rmb, rate, upsFreight) + "</div>\n");
+        writer.write("<div class=\"header-row\">\n");
+        writer.write("<span style=\"width: 80px; font-size: 9px;\">GROSS WEIGHT:</span>\n");
+        writer.write("<span class=\"header-value\">" + String.format("%.1f", weight) + "</span>\n");
+        writer.write("</div>\n");
+        writer.write("<div class=\"header-row\">\n");
+        writer.write("<span style=\"width: 80px; font-size: 9px;\">BOXES:</span>\n");
+        writer.write("<span class=\"header-value\">" + boxes + "</span>\n");
+        writer.write("</div>\n");
+        writer.write("<div class=\"header-row\">\n");
+        writer.write("<span style=\"width: 80px; font-size: 9px;\">UPS TRACKING#:</span>\n");
+        writer.write("<span class=\"header-value\">" + (tracking != null ? tracking : "") + "</span>\n");
+        writer.write("</div>\n");
+        // Add page numbers
+        if (totalPages > 1) {
+            writer.write("<div style=\"text-align: center; margin-top: 5px; font-size: 9px; font-weight: bold;\">\n");
+            writer.write("Page " + currentPage + " of " + totalPages + "\n");
+            writer.write("</div>\n");
+        }
+        writer.write("</div>\n");
+        writer.write("</div>\n");
+    }
+
+    /**
+     * Writes the data table section for a single page with left and right columns
+     */
+    private void writePageData(BufferedWriter writer, List<InvoiceEntry> invoiceEntries, int pageNum, int itemsPerPage) throws IOException {
+        writer.write("<div class=\"tables-container\">\n");
+        
+        // Calculate the range of items for this page
+        int startIndex = pageNum * itemsPerPage;
+        int endIndex = Math.min(startIndex + itemsPerPage, invoiceEntries.size());
+        int itemsOnThisPage = endIndex - startIndex;
+        
+        // Calculate entries per column for this page (split evenly)
+        int entriesPerColumn = (int) Math.ceil(itemsOnThisPage / 2.0);
+        
+        // Left column
+        writer.write("<div class=\"table-column\">\n");
+        writeTableHeader(writer);
+        
+        for (int i = 0; i < entriesPerColumn && (startIndex + i) < endIndex; i++) {
+            InvoiceEntry entry = invoiceEntries.get(startIndex + i);
+            writeTableRow(writer, entry);
+        }
+        
+        writer.write("</table>\n");
+        writer.write("</div>\n");
+        
+        // Right column
+        writer.write("<div class=\"table-column\">\n");
+        writeTableHeader(writer);
+        
+        for (int i = entriesPerColumn; i < itemsOnThisPage && (startIndex + i) < endIndex; i++) {
+            InvoiceEntry entry = invoiceEntries.get(startIndex + i);
+            writeTableRow(writer, entry);
+        }
+        
+        writer.write("</table>\n");
+        writer.write("</div>\n");
+        writer.write("</div>\n");
+    }
+
+    /**
+     * Writes the table header
+     */
+    private void writeTableHeader(BufferedWriter writer) throws IOException {
+        writer.write("<table class=\"data-table\">\n");
+        writer.write("<tr>\n");
+        writer.write("<th class=\"po-col\">PO/NO</th>\n");
+        writer.write("<th class=\"item-col\">ITEM NO.</th>\n");
+        writer.write("<th class=\"qty-col\">QTY</th>\n");
+        writer.write("<th class=\"receive-check-col\">RECEIVE CHECK</th>\n");
+        writer.write("<th class=\"notes-col\">NOTES</th>\n");
+        writer.write("</tr>\n");
+    }
+
+    /**
+     * Writes a single table row
+     */
+    private void writeTableRow(BufferedWriter writer, InvoiceEntry entry) throws IOException {
+        writer.write("<tr>\n");
+        writer.write("<td>" + entry.getPoNo() + "</td>\n");
+        writer.write("<td>" + entry.getItemNo() + "</td>\n");
+        writer.write("<td>" + entry.getQty() + "</td>\n");
+        writer.write("<td><input type=\"checkbox\"></td>\n");
+        writer.write("<td></td>\n");
+        writer.write("</tr>\n");
     }
 
     public File generateMsdosCsv(String date, List<InvoiceEntry> invoiceEntries) throws IOException {

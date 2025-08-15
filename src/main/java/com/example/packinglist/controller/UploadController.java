@@ -348,6 +348,7 @@ public class UploadController {
             writer.write(".data-table th { border: 1px solid #000; background-color: #f0f0f0; font-weight: bold; text-align: center; padding: 3px; font-size: 10px; }\n");
             writer.write(".data-table th.item-header, .data-table th.qty-header { font-size: 12px; }\n");
             writer.write(".data-table td { border: 1px solid #000; text-align: center; padding: 2px; font-size: 8px; }\n");
+            writer.write(".data-table td.item-data, .data-table td.qty-data { font-size: 16px; }\n");
             writer.write(".duplicate-item { border: 3px solid red; border-radius: 50%; }\n");
             writer.write(".po-col { width: 15%; }\n");
             writer.write(".item-col { width: 25%; }\n");
@@ -520,9 +521,9 @@ public class UploadController {
     private void writeTableRow(BufferedWriter writer, InvoiceEntry entry, boolean isDuplicate) throws IOException {
         writer.write("<tr>\n");
         writer.write("<td>" + entry.getPoNo() + "</td>\n");
-        String itemClass = isDuplicate ? " class=\"duplicate-item\"" : "";
+        String itemClass = isDuplicate ? " class=\"duplicate-item item-data\"" : " class=\"item-data\"";
         writer.write("<td" + itemClass + ">" + entry.getItemNo() + "</td>\n");
-        writer.write("<td>" + entry.getQty() + "</td>\n");
+        writer.write("<td class=\"qty-data\">" + entry.getQty() + "</td>\n");
         writer.write("<td><input type=\"checkbox\"></td>\n");
         writer.write("<td></td>\n");
         writer.write("</tr>\n");

@@ -313,6 +313,9 @@ public class UploadController {
         }
         double upsFreight = rmb / rate;
 
+        // Find all duplicate item numbers across the entire dataset
+        Set<String> allDuplicateItems = findAllDuplicateItemNumbers(invoiceEntries);
+
         File file = File.createTempFile("packing-list-" + date, ".html");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write("<!DOCTYPE html>\n");
@@ -351,7 +354,7 @@ public class UploadController {
             writer.write(".data-table th.item-header, .data-table th.qty-header { font-size: 12px; }\n");
             writer.write(".data-table td { border: 1px solid #000; text-align: center; padding: 2px; font-size: 8px; }\n");
             writer.write(".data-table td.item-data, .data-table td.qty-data { font-size: 16px; }\n");
-            writer.write(".duplicate-item { border: 3px solid red; border-radius: 50%; }\n");
+            writer.write(".duplicate-item { border: 3px solid red; border-radius: 50%; background-color: #ffcccc; font-weight: bold; }\n");
             writer.write(".po-col { width: 15%; }\n");
             writer.write(".item-col { width: 25%; }\n");
             writer.write(".qty-col { width: 10%; }\n");
@@ -383,7 +386,7 @@ public class UploadController {
                 
                 // Data tables section for this page
                 boolean isLastPage = (pageNum == totalPages - 1);
-                writePageData(writer, invoiceEntries, pageNum, itemsPerPage, isLastPage, totalQty);
+                writePageData(writer, invoiceEntries, pageNum, itemsPerPage, isLastPage, totalQty, allDuplicateItems);
             }
 
             writer.write("</body>\n</html>\n");
@@ -454,7 +457,7 @@ public class UploadController {
     /**
      * Writes the data table section for a single page with left and right columns
      */
-    private void writePageData(BufferedWriter writer, List<InvoiceEntry> invoiceEntries, int pageNum, int itemsPerPage, boolean isLastPage, int totalQty) throws IOException {
+    private void writePageData(BufferedWriter writer, List<InvoiceEntry> invoiceEntries, int pageNum, int itemsPerPage, boolean isLastPage, int totalQty, Set<String> allDuplicateItems) throws IOException {
         writer.write("<div class=\"tables-container\">\n");
         
         // Calculate the range of items for this page
@@ -462,8 +465,7 @@ public class UploadController {
         int endIndex = Math.min(startIndex + itemsPerPage, invoiceEntries.size());
         int itemsOnThisPage = endIndex - startIndex;
         
-        // Find duplicate item numbers on this page
-        Set<String> duplicateItems = findDuplicateItemNumbers(invoiceEntries, startIndex, endIndex);
+        // Use the global duplicate item numbers (passed as parameter)
         
         // Calculate entries per column for this page (split evenly)
         int entriesPerColumn = (int) Math.ceil(itemsOnThisPage / 2.0);
@@ -474,7 +476,7 @@ public class UploadController {
         
         for (int i = 0; i < entriesPerColumn && (startIndex + i) < endIndex; i++) {
             InvoiceEntry entry = invoiceEntries.get(startIndex + i);
-            writeTableRow(writer, entry, duplicateItems.contains(entry.getItemNo()));
+            writeTableRow(writer, entry, allDuplicateItems.contains(entry.getItemNo()));
         }
         
         writer.write("</table>\n");
@@ -486,7 +488,7 @@ public class UploadController {
         
         for (int i = entriesPerColumn; i < itemsOnThisPage && (startIndex + i) < endIndex; i++) {
             InvoiceEntry entry = invoiceEntries.get(startIndex + i);
-            writeTableRow(writer, entry, duplicateItems.contains(entry.getItemNo()));
+            writeTableRow(writer, entry, allDuplicateItems.contains(entry.getItemNo()));
         }
         
         // Add total quantity row at the end of the last page
@@ -531,6 +533,29 @@ public class UploadController {
         writer.write("<td><input type=\"checkbox\"></td>\n");
         writer.write("<td></td>\n");
         writer.write("</tr>\n");
+    }
+
+    /**
+     * Finds all duplicate item numbers across the entire dataset
+     */
+    private Set<String> findAllDuplicateItemNumbers(List<InvoiceEntry> invoiceEntries) {
+        Map<String, Integer> itemCounts = new HashMap<>();
+        Set<String> duplicates = new HashSet<>();
+        
+        // Count occurrences of each item number across all entries
+        for (InvoiceEntry entry : invoiceEntries) {
+            String itemNo = entry.getItemNo();
+            itemCounts.put(itemNo, itemCounts.getOrDefault(itemNo, 0) + 1);
+        }
+        
+        // Find items that appear more than once
+        for (Map.Entry<String, Integer> entry : itemCounts.entrySet()) {
+            if (entry.getValue() > 1) {
+                duplicates.add(entry.getKey());
+            }
+        }
+        
+        return duplicates;
     }
 
     /**

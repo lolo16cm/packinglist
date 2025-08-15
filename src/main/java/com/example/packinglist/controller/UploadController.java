@@ -346,7 +346,7 @@ public class UploadController {
             writer.write(".table-column { flex: 1; }\n");
             writer.write(".data-table { width: 100%; border: 2px solid #000; }\n");
             writer.write(".data-table th { border: 1px solid #000; background-color: #f0f0f0; font-weight: bold; text-align: center; padding: 3px; font-size: 10px; }\n");
-            writer.write(".data-table th.item-header, .data-table th.qty-header { font-size: 16px; }\n");
+            writer.write(".data-table th.item-header, .data-table th.qty-header { font-size: 12px; }\n");
             writer.write(".data-table td { border: 1px solid #000; text-align: center; padding: 2px; font-size: 8px; }\n");
             writer.write(".duplicate-item { border: 3px solid red; border-radius: 50%; }\n");
             writer.write(".po-col { width: 15%; }\n");

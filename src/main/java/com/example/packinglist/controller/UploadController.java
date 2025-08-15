@@ -235,7 +235,7 @@ public class UploadController {
     public File generatePackingList(String date, List<InvoiceEntry> invoiceEntries, String tracking, double weight, int boxes, double rmb, double rate) throws IOException {
         String arrival = "XR" + date;
         String po = "W" + date;
-        double upsFreight = weight * rmb / rate;
+        double upsFreight = rmb / rate;
 
         File file = File.createTempFile("packing-list-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
@@ -309,7 +309,7 @@ public class UploadController {
             // Fallback to original calculation if parsing fails
             arrival = "XR" + date;
         }
-        double upsFreight = weight * rmb / rate;
+        double upsFreight = rmb / rate;
 
         File file = File.createTempFile("packing-list-" + date, ".html");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
@@ -603,14 +603,14 @@ public class UploadController {
     public File generateCsv(String date, List<PackingEntry> entries, String tracking, double weight, int boxes, double rmb, double rate) throws IOException {
         String arrival = "XR" + date;
         String po = "W" + date;
-        double upsFreight = weight * rmb / rate;
+        double upsFreight = rmb / rate;
 
         File file = File.createTempFile("packing-list-" + date, ".csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write("ARRIVAL#: " + arrival + "\n");
             writer.write("AMNT:\n");
             writer.write("DATE:\n");
-            writer.write(String.format("UPS FREIGHT: %.1f KG * %.0f RMB / %.2f RATE = $%.2f\n", weight, rmb, rate, upsFreight));
+            writer.write(String.format("UPS FREIGHT: %.0f RMB / %.2f RATE = $%.2f\n", rmb, rate, upsFreight));
             writer.write(String.format("GROSS WEIGHT: %.1f KG, %d BOXES\n", weight, boxes));
             if (tracking != null && !tracking.isEmpty()) {
                 writer.write("UPS TRACKING#: " + tracking + "\n\n");

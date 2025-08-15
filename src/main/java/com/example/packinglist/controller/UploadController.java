@@ -345,6 +345,8 @@ public class UploadController {
             writer.write(".header-row { display: flex; margin-bottom: 3px; }\n");
             writer.write(".header-label { font-weight: bold; width: 70px; }\n");
             writer.write(".header-value { flex: 1; border-bottom: 1px solid #000; margin-left: 5px; min-height: 12px; }\n");
+            writer.write(".header-value-no-underline { flex: 1; margin-left: 5px; min-height: 12px; }\n");
+            writer.write(".handwriting-line { border-bottom: 1px solid #000; margin: 2px 0; height: 15px; }\n");
             
             // Data tables container
             writer.write(".tables-container { display: flex; gap: 10px; }\n");
@@ -437,12 +439,14 @@ public class UploadController {
         writer.write("</div>\n");
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-label\">P.O.#W25" + todayMonth + todayDate + "=>AMNT:</span>\n");
-        writer.write("<span class=\"header-value\"></span>\n");
+        writer.write("<span class=\"header-value-no-underline\"></span>\n");
         writer.write("</div>\n");
+        writer.write("<div class=\"handwriting-line\"></div>\n");
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-label\">P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:</span>\n");
-        writer.write("<span class=\"header-value\"></span>\n");
+        writer.write("<span class=\"header-value-no-underline\"></span>\n");
         writer.write("</div>\n");
+        writer.write("<div class=\"handwriting-line\"></div>\n");
         writer.write("</div>\n");
         
         // Right header box

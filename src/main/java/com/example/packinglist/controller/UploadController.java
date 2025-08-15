@@ -345,6 +345,8 @@ public class UploadController {
             writer.write(".header-row { display: flex; margin-bottom: 3px; }\n");
             writer.write(".header-label { font-weight: bold; width: 70px; }\n");
             writer.write(".header-value { flex: 1; border-bottom: 1px solid #000; margin-left: 5px; min-height: 12px; }\n");
+            writer.write(".header-value-no-underline { flex: 1; margin-left: 5px; min-height: 12px; }\n");
+            writer.write(".handwriting-line { border-bottom: 1px solid #000; margin: 2px 0; height: 15px; }\n");
             
             // Data tables container
             writer.write(".tables-container { display: flex; gap: 10px; }\n");
@@ -354,7 +356,21 @@ public class UploadController {
             writer.write(".data-table th.item-header, .data-table th.qty-header { font-size: 12px; }\n");
             writer.write(".data-table td { border: 1px solid #000; text-align: center; padding: 2px; font-size: 8px; }\n");
             writer.write(".data-table td.item-data, .data-table td.qty-data { font-size: 16px; }\n");
-            writer.write(".duplicate-item { border: 3px solid red; border-radius: 50%; background-color: #ffcccc; font-weight: bold; }\n");
+            writer.write(".duplicate-item { \n");
+            writer.write("  border: 4px solid red; \n");
+            writer.write("  border-radius: 50%; \n");
+            writer.write("  background-color: #ffeeee; \n");
+            writer.write("  box-shadow: 0 0 8px rgba(255, 0, 0, 0.5);\n");
+            writer.write("  font-weight: bold;\n");
+            writer.write("}\n");
+            writer.write("@media print {\n");
+            writer.write("  .duplicate-item {\n");
+            writer.write("    border: 4px solid #000 !important;\n");
+            writer.write("    background-color: #f0f0f0 !important;\n");
+            writer.write("    box-shadow: none !important;\n");
+            writer.write("    font-weight: bold !important;\n");
+            writer.write("  }\n");
+            writer.write("}\n");
             writer.write(".po-col { width: 15%; }\n");
             writer.write(".item-col { width: 25%; }\n");
             writer.write(".qty-col { width: 10%; }\n");
@@ -404,10 +420,15 @@ public class UploadController {
         
         // Left header box
         writer.write("<div class=\"header-left\">\n");
-        writer.write("<div class=\"header-row\">\n");
-        writer.write("<span class=\"header-label\">ARRIVAL#:</span>\n");
-        writer.write("<span class=\"header-value\">" + arrival + "</span>\n");
-        writer.write("</div>\n");
+        
+        // Only show ARRIVAL# on the first page
+        if (currentPage == 1) {
+            writer.write("<div class=\"header-row\">\n");
+            writer.write("<span class=\"header-label\">ARRIVAL#:</span>\n");
+            writer.write("<span class=\"header-value\">" + arrival + "</span>\n");
+            writer.write("</div>\n");
+        }
+        
         // Get today's date for dynamic formatting
         String todayMonth = new SimpleDateFormat("MM").format(new Date());
         String todayDate = new SimpleDateFormat("dd").format(new Date());
@@ -418,14 +439,14 @@ public class UploadController {
         writer.write("</div>\n");
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-label\">P.O.#W25" + todayMonth + todayDate + "=>AMNT:</span>\n");
-        writer.write("<span class=\"header-value\"></span>\n");
+        writer.write("<span class=\"header-value-no-underline\"></span>\n");
         writer.write("</div>\n");
-        writer.write("<div style=\"height: 10px;\"></div>\n"); // Space after first P.O. line
+        writer.write("<div class=\"handwriting-line\"></div>\n");
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-label\">P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:</span>\n");
-        writer.write("<span class=\"header-value\"></span>\n");
+        writer.write("<span class=\"header-value-no-underline\"></span>\n");
         writer.write("</div>\n");
-        writer.write("<div style=\"height: 10px;\"></div>\n"); // Space after second P.O. line
+        writer.write("<div class=\"handwriting-line\"></div>\n");
         writer.write("</div>\n");
         
         // Right header box

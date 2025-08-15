@@ -246,7 +246,9 @@ public class UploadController {
             writer.write("ARRIVAL#: " + arrival + "\n");
             writer.write("DATE:\n");
             writer.write("P.O.#W25" + todayMonth + todayDate + "=>AMNT:\n");
+            writer.write("\n");
             writer.write("P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:\n");
+            writer.write("\n");
             writer.write("\n"); // Empty row between DATE: and UPS FREIGHT:
             writer.write(String.format("UPS FREIGHT: %.0f RMB / %.2f RATE = $%.2f\n", rmb, rate, upsFreight));
             // Combine weight and boxes info in one cell with new format

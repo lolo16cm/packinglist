@@ -417,10 +417,12 @@ public class UploadController {
         writer.write("<span class=\"header-label\">P.O.#W25" + todayMonth + todayDate + "=>AMNT:</span>\n");
         writer.write("<span class=\"header-value\"></span>\n");
         writer.write("</div>\n");
+        writer.write("<div style=\"height: 10px;\"></div>\n"); // Space after first P.O. line
         writer.write("<div class=\"header-row\">\n");
         writer.write("<span class=\"header-label\">P.O.#WONA25" + todayMonth + todayDate + ",8%DISC$321.07=>AMNT:</span>\n");
         writer.write("<span class=\"header-value\"></span>\n");
         writer.write("</div>\n");
+        writer.write("<div style=\"height: 10px;\"></div>\n"); // Space after second P.O. line
         writer.write("</div>\n");
         
         // Right header box
